@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+app:
+  mail:
+    enabled: true
+    retry-count: 5
+
+logging:
+  level:
+    kz.iitu: WARN
