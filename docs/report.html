@@ -1,0 +1,582 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Lab06 — Kassymzhanov Arzum</title><style>@page {size:A4;margin:17mm 18mm;}body{font:11px/1.5 "DejaVu Sans",Arial;color:#16243b;}h1{font-size:25px;}h2{font-size:19px;color:#244b83;break-after:avoid;}h3{font-size:14px;color:#244b83;break-after:avoid;}p{overflow-wrap:anywhere;}pre{font:8px/1.4 "DejaVu Sans Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f5f9;border:1px solid #dce3ee;padding:10px;}table{border-collapse:collapse;width:100%;font-size:10px;margin:12px 0;}th,td{border:1px solid #dce3ee;padding:6px;text-align:left;}th{background:#eef3fa;}tr{break-inside:avoid;}figure{margin:18px 0;break-inside:avoid;text-align:center;}img{max-width:100%;max-height:205mm;object-fit:contain;}figcaption{font-size:10px;font-style:italic;margin-top:6px;}.cover{height:255mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;break-after:page;}.cover h1{margin-top:35px;}</style></head><body><section class="cover"><h2>International Information Technology University</h2><p>Department of Information Systems</p><h1>ЛАБОРАТОРНАЯ РАБОТА №6</h1><h2>Forms and validation</h2><p>RWPSF 3305 — Web Application Development with Spring Framework</p><p>Kassymzhanov Arzum<br>IT1-2404IS<br>Вариант 12 — Method validation</p><p>Almaty, 2026</p></section><h2>1. Цель и исходный проект</h2><p>Цель работы — реализовать обработку формы книги средствами Spring MVC и Thymeleaf: связывание полей, декларативную валидацию, сохранение введённых значений при ошибках, локализацию и централизованную обработку исключений. Индивидуальное задание — вариант 12: method validation параметра поискового запроса.</p><p>Студент: Kassymzhanov Arzum. Группа: IT1-2404IS. Курс: RWPSF 3305 — Web Application Development with Spring Framework. Лабораторная работа №6: Forms and validation.</p><p>Репозиторий и ветка: https://github.com/Karz317/spring-lab-01/tree/lab06</p><p>Исходная ветка lab04, коммит bfaaf1278571960107ff2940e7cb27d4bb328b31. В доступном репозитории отсутствовала основа лабораторной №5, поэтому добавлены Book, BookRepository, BookService, REST CRUD, страницы каталога, фильтр, CSS и стартовая страница. Существующий код лабораторных №2–4 сохранён. Коммит реализации №6: ec47757.</p><table><tr><th>Компонент</th><th>Фактически использовано</th></tr><tr><td>Java</td><td>JDK 25.0.4.1 LTS; SHA-256 архива проверен</td></tr><tr><td>Spring Boot</td><td>4.1.1</td></tr><tr><td>Maven</td><td>3.9.16, repository wrapper</td></tr><tr><td>Представления</td><td>Thymeleaf; английский и русский resource bundles</td></tr><tr><td>Валидация</td><td>Jakarta Bean Validation, Hibernate Validator</td></tr><tr><td>Хранилище</td><td>ConcurrentHashMap; три начальные книги; данные в памяти</td></tr><tr><td>Проверки</td><td>32 автоматических теста; 23 записи браузерных/HTTP-проверок</td></tr></table><h2>2. Модель формы и правила валидации</h2><p>BookForm отделён от неизменяемого record Book. Getters и setters позволяют WebDataBinder заполнить объект частично и вернуть его в форму вместе с BindingResult. Пользователь не может связать форму с id: @InitBinder разрешает только title, author, year, genre и available. В отличие от примера методички, год представлен Integer с @NotNull: пустое поле получает понятное сообщение «Укажите год», а не превращается в 0.</p><table><tr><th>Поле</th><th>Ограничение</th><th>Поведение</th></tr><tr><td>title</td><td>@NotBlank, @Size(max=120)</td><td>Пустая строка, пробелы и 121 символ отклоняются</td></tr><tr><td>author</td><td>@NotBlank, @NoDigits</td><td>Имя обязательно; цифры, включая Unicode, запрещены</td></tr><tr><td>year</td><td>@NotNull, @Min(1450), @Max(2100)</td><td>Границы 1450 и 2100 допустимы; пустое и нечисловое значение отклоняются</td></tr><tr><td>genre</td><td>@NotNull</td><td>Выбор жанра обязателен; неизвестное значение даёт ошибку связывания</td></tr><tr><td>available</td><td>boolean</td><td>Значение checkbox сохраняется в Book</td></tr></table><h3>Листинг 1. BookForm</h3><p>src/main/java/kz/iitu/springlab/web/BookForm.java</p><pre><code>package kz.iitu.springlab.web;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import kz.iitu.springlab.web.validation.NoDigits;
+
+public class BookForm {
+    @NotBlank(message = &quot;{book.title.required}&quot;)
+    @Size(max = 120, message = &quot;{book.title.size}&quot;)
+    private String title;
+
+    @NotBlank(message = &quot;{book.author.required}&quot;)
+    @NoDigits
+    private String author;
+
+    @NotNull(message = &quot;{book.year.required}&quot;)
+    @Min(value = 1450, message = &quot;{book.year.range}&quot;)
+    @Max(value = 2100, message = &quot;{book.year.range}&quot;)
+    private Integer year;
+
+    @NotNull(message = &quot;{book.genre.required}&quot;)
+    private Genre genre;
+
+    private boolean available;
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getAuthor() { return author; }
+    public void setAuthor(String author) { this.author = author; }
+    public Integer getYear() { return year; }
+    public void setYear(Integer year) { this.year = year; }
+    public Genre getGenre() { return genre; }
+    public void setGenre(Genre genre) { this.genre = genre; }
+    public boolean isAvailable() { return available; }
+    public void setAvailable(boolean available) { this.available = available; }
+}</code></pre><h3>Листинг 2. Genre</h3><p>src/main/java/kz/iitu/springlab/web/Genre.java</p><pre><code>package kz.iitu.springlab.web;
+
+public enum Genre {
+    FICTION, NON_FICTION, SCIENCE, TECHNOLOGY, HISTORY
+}</code></pre><h3>Листинг 3. Book</h3><p>src/main/java/kz/iitu/springlab/catalog/Book.java</p><pre><code>package kz.iitu.springlab.catalog;
+
+import kz.iitu.springlab.web.Genre;
+
+public record Book(Long id, String title, String author, int year,
+                   Genre genre, boolean available) {
+    public Book(Long id, String title, String author, int year) {
+        this(id, title, author, year, Genre.TECHNOLOGY, true);
+    }
+}</code></pre><h2>3. Контроллер и шаблон формы</h2><p>GET /books/new помещает в модель новый BookForm и Genre.values(). В POST параметр BindingResult расположен непосредственно после @Valid @ModelAttribute(&quot;form&quot;). Если имеются ошибки, genres снова добавляется в модель и возвращается books/form. При успехе создаётся книга, локализованное сообщение передаётся через flash и выполняется redirect:/books.</p><p>th:object задаёт объект формы; *{title} обращается к его свойству. th:field генерирует name, id и value, а для select и checkbox — выбранное состояние. th:errors показывает сообщения; th:errorclass выделяет поле. Блок #fields размещён внутри области th:object, чтобы summary имел доступ к BindingResult. novalidate позволяет продемонстрировать именно серверную проверку.</p><h3>Листинг 4. BookPageController: GET, POST, PRG</h3><p>src/main/java/kz/iitu/springlab/web/BookPageController.java</p><pre><code>package kz.iitu.springlab.web;
+
+import jakarta.validation.Valid;
+import java.util.Locale;
+import kz.iitu.springlab.catalog.Book;
+import kz.iitu.springlab.catalog.BookService;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping(&quot;/books&quot;)
+public class BookPageController {
+    private final BookService service;
+    private final MessageSource messages;
+
+    public BookPageController(BookService service, MessageSource messages) {
+        this.service = service;
+        this.messages = messages;
+    }
+
+    @InitBinder(&quot;form&quot;)
+    public void configureBinding(WebDataBinder binder) {
+        binder.setAllowedFields(&quot;title&quot;, &quot;author&quot;, &quot;year&quot;, &quot;genre&quot;, &quot;available&quot;);
+    }
+
+    @GetMapping
+    public String list(@RequestParam(required = false) String author, Model model) {
+        model.addAttribute(&quot;books&quot;, service.findAll(author));
+        model.addAttribute(&quot;author&quot;, author);
+        return &quot;books/list&quot;;
+    }
+
+    @GetMapping(&quot;/new&quot;)
+    public String newForm(Model model) {
+        model.addAttribute(&quot;form&quot;, new BookForm());
+        model.addAttribute(&quot;genres&quot;, Genre.values());
+        return &quot;books/form&quot;;
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public String detail(@PathVariable long id, Model model) {
+        model.addAttribute(&quot;book&quot;, service.findById(id));
+        return &quot;books/detail&quot;;
+    }
+
+    @PostMapping
+    public String create(@Valid @ModelAttribute(&quot;form&quot;) BookForm form,
+                         BindingResult binding, Model model,
+                         RedirectAttributes redirect, Locale locale) {
+        if (binding.hasErrors()) {
+            model.addAttribute(&quot;genres&quot;, Genre.values());
+            return &quot;books/form&quot;;
+        }
+        Book saved = service.create(new Book(null, form.getTitle(), form.getAuthor(),
+                form.getYear(), form.getGenre(), form.isAvailable()));
+        redirect.addFlashAttribute(&quot;message&quot;, messages.getMessage(&quot;book.added&quot;,
+                new Object[]{saved.title()}, locale));
+        return &quot;redirect:/books&quot;;
+    }
+}</code></pre><h3>Листинг 5. templates/books/form.html</h3><p>src/main/resources/templates/books/form.html</p><pre><code>&lt;!DOCTYPE html&gt;
+&lt;html xmlns:th=&quot;http://www.thymeleaf.org&quot; th:lang=&quot;${#locale.language}&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+    &lt;title th:text=&quot;#{book.new}&quot;&gt;New book&lt;/title&gt;
+    &lt;link rel=&quot;stylesheet&quot; th:href=&quot;@{/css/app.css}&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;main class=&quot;container narrow&quot;&gt;
+    &lt;header&gt;
+        &lt;a class=&quot;brand&quot; th:href=&quot;@{/books}&quot; th:text=&quot;#{book.catalogue}&quot;&gt;Book catalogue&lt;/a&gt;
+        &lt;nav th:aria-label=&quot;#{form.language}&quot;&gt;
+            &lt;a th:href=&quot;@{/books/new(lang=&#x27;en&#x27;)}&quot;&gt;English&lt;/a&gt;
+            &lt;a th:href=&quot;@{/books/new(lang=&#x27;ru&#x27;)}&quot;&gt;Русский&lt;/a&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+    &lt;h1 th:text=&quot;#{book.new}&quot;&gt;New book&lt;/h1&gt;
+    &lt;p class=&quot;intro&quot; th:text=&quot;#{form.intro}&quot;&gt;Add a book to the catalogue.&lt;/p&gt;
+    &lt;form class=&quot;panel book-form&quot; th:action=&quot;@{/books}&quot; th:object=&quot;${form}&quot; method=&quot;post&quot; novalidate&gt;
+        &lt;div class=&quot;alert&quot; role=&quot;alert&quot; th:if=&quot;${#fields.hasAnyErrors()}&quot;&gt;
+            &lt;strong th:text=&quot;#{form.errors}&quot;&gt;Please correct the following errors:&lt;/strong&gt;
+            &lt;ul&gt;&lt;li th:each=&quot;error : ${#fields.allErrors()}&quot; th:text=&quot;${error}&quot;&gt;&lt;/li&gt;&lt;/ul&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;field&quot;&gt;
+            &lt;label for=&quot;title&quot; th:text=&quot;#{book.title}&quot;&gt;Title&lt;/label&gt;
+            &lt;input type=&quot;text&quot; th:field=&quot;*{title}&quot; th:errorclass=&quot;is-invalid&quot; aria-describedby=&quot;title-error&quot;&gt;
+            &lt;span id=&quot;title-error&quot; class=&quot;error&quot; th:if=&quot;${#fields.hasErrors(&#x27;title&#x27;)}&quot; th:errors=&quot;*{title}&quot;&gt;&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;field&quot;&gt;
+            &lt;label for=&quot;author&quot; th:text=&quot;#{book.author}&quot;&gt;Author&lt;/label&gt;
+            &lt;input type=&quot;text&quot; th:field=&quot;*{author}&quot; th:errorclass=&quot;is-invalid&quot; aria-describedby=&quot;author-error&quot;&gt;
+            &lt;span id=&quot;author-error&quot; class=&quot;error&quot; th:if=&quot;${#fields.hasErrors(&#x27;author&#x27;)}&quot; th:errors=&quot;*{author}&quot;&gt;&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;columns&quot;&gt;
+            &lt;div class=&quot;field&quot;&gt;
+                &lt;label for=&quot;year&quot; th:text=&quot;#{book.year}&quot;&gt;Year&lt;/label&gt;
+                &lt;input type=&quot;number&quot; th:field=&quot;*{year}&quot; th:errorclass=&quot;is-invalid&quot; aria-describedby=&quot;year-error&quot;&gt;
+                &lt;span id=&quot;year-error&quot; class=&quot;error&quot; th:if=&quot;${#fields.hasErrors(&#x27;year&#x27;)}&quot; th:errors=&quot;*{year}&quot;&gt;&lt;/span&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;field&quot;&gt;
+                &lt;label for=&quot;genre&quot; th:text=&quot;#{book.genre}&quot;&gt;Genre&lt;/label&gt;
+                &lt;select th:field=&quot;*{genre}&quot; th:errorclass=&quot;is-invalid&quot; aria-describedby=&quot;genre-error&quot;&gt;
+                    &lt;option value=&quot;&quot; th:text=&quot;#{book.genre.choose}&quot;&gt;Choose a genre&lt;/option&gt;
+                    &lt;option th:each=&quot;g : ${genres}&quot; th:value=&quot;${g}&quot; th:text=&quot;#{&#x27;genre.&#x27; + ${g}}&quot;&gt;&lt;/option&gt;
+                &lt;/select&gt;
+                &lt;span id=&quot;genre-error&quot; class=&quot;error&quot; th:if=&quot;${#fields.hasErrors(&#x27;genre&#x27;)}&quot; th:errors=&quot;*{genre}&quot;&gt;&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;label class=&quot;checkbox-row&quot;&gt;
+            &lt;input type=&quot;checkbox&quot; th:field=&quot;*{available}&quot;&gt;
+            &lt;span th:text=&quot;#{book.available}&quot;&gt;Available&lt;/span&gt;
+        &lt;/label&gt;
+        &lt;div class=&quot;actions&quot;&gt;
+            &lt;button type=&quot;submit&quot; th:text=&quot;#{form.submit}&quot;&gt;Save&lt;/button&gt;
+            &lt;a th:href=&quot;@{/books}&quot; th:text=&quot;#{form.back}&quot;&gt;Back to catalogue&lt;/a&gt;
+        &lt;/div&gt;
+    &lt;/form&gt;
+&lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre><h2>4. Проверка формы и Post/Redirect/Get</h2><table><tr><th>Ввод / действие</th><th>Результат</th></tr><tr><td>Пустое название; остальные поля заполнены</td><td>200 HTML; ошибка title; автор, год, жанр и checkbox сохранены; новая книга не создана</td></tr><tr><td>Год 1200</td><td>200 HTML; book.year.range рядом с полем и в summary; введённый 1200 остаётся</td></tr><tr><td>Жанр не выбран</td><td>200 HTML; book.genre.required; остальные значения остаются</td></tr><tr><td>Автор Bloch 2018</td><td>200 HTML; срабатывает собственный @NoDigits</td></tr><tr><td>Пустое название + 1200 + без жанра</td><td>Все три ошибки одновременно перечислены в summary</td></tr><tr><td>Корректная форма</td><td>POST /books → 302 Location: /books → GET /books → 200; новая книга и flash</td></tr><tr><td>Обновление страницы</td><td>Повторный GET 200; flash исчез; число книг осталось 4</td></tr></table><figure><img src="screenshots/03-empty-title.png"><figcaption>Рисунок 1. Пустое название отклонено; Joshua Bloch, 2018 и Technology сохранены.</figcaption></figure><figure><img src="screenshots/04-year-range.png"><figcaption>Рисунок 2. Год 1200 отклонён; неверное значение остаётся в поле.</figcaption></figure><figure><img src="screenshots/05-no-genre.png"><figcaption>Рисунок 3. Жанр обязателен; остальные поля не потеряны.</figcaption></figure><figure><img src="screenshots/09-success-flash.png"><figcaption>Рисунок 4. Успешный POST: после перенаправления появилась новая книга и flash.</figcaption></figure><figure><img src="screenshots/10-refresh-no-duplicate.png"><figcaption>Рисунок 5. После обновления flash отсутствует; в каталоге остаются четыре книги.</figcaption></figure><figure><img src="screenshots/08-combined-errors.png"><figcaption>Рисунок 6. Summary показывает несколько ошибок одновременно.</figcaption></figure><p>FlashMap хранит сообщение между POST и последующим GET, обычно с использованием HTTP-сессии. После совпавшего GET оно потребляется. F5 повторяет GET, а не POST: повторного service.create нет.</p><h2>5. Локализация интерфейса и сообщений</h2><p>SessionLocaleResolver использует английский язык по умолчанию и хранит выбор в сессии. LocaleChangeInterceptor читает lang. Подписи, названия жанров, ошибки Bean Validation, ошибки преобразования типов, flash и страница 404 берутся из resource bundles. Обязательный messages.properties позволяет Spring Boot настроить MessageSource; messages_ru.properties содержит русский вариант. Скриншоты ниже показывают одинаковую ошибку title на обоих языках.</p><figure><img src="screenshots/03-empty-title.png"><figcaption>Рисунок 7. Английские подписи и сообщение The title must not be empty.</figcaption></figure><figure><img src="screenshots/07-russian-validation.png"><figcaption>Рисунок 8. Русские подписи, жанр и сообщение «Название не может быть пустым».</figcaption></figure><h3>Листинг 6. LocaleConfiguration</h3><p>src/main/java/kz/iitu/springlab/config/LocaleConfiguration.java</p><pre><code>package kz.iitu.springlab.config;
+
+import java.util.Locale;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+@Configuration
+public class LocaleConfiguration implements WebMvcConfigurer {
+    @Bean
+    public LocaleResolver localeResolver() {
+        SessionLocaleResolver resolver = new SessionLocaleResolver();
+        resolver.setDefaultLocale(Locale.ENGLISH);
+        return resolver;
+    }
+
+    @Bean
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+        interceptor.setParamName(&quot;lang&quot;);
+        interceptor.setIgnoreInvalidLocale(true);
+        return interceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
+    }
+}</code></pre><h3>Листинг 7. messages.properties — полный bundle</h3><p>src/main/resources/messages.properties</p><pre><code>book.catalogue=Book catalogue
+book.new=New book
+book.id=ID
+book.title=Title
+book.author=Author
+book.year=Year
+book.genre=Genre
+book.genre.choose=Choose a genre
+book.available=Available
+book.added=Book «{0}» has been added
+book.title.required=The title must not be empty
+book.title.size=The title must not exceed 120 characters
+book.author.required=The author must not be empty
+book.author.nodigits=The author must not contain digits
+book.year.required=The year is required
+book.year.range=The year must be between 1450 and 2100
+book.genre.required=Choose a genre
+book.notfound=Book with id {0} was not found
+book.search.size=The search query must contain between 2 and 60 characters
+form.submit=Save
+form.back=Back to catalogue
+form.language=Language
+form.intro=Enter the details. Required fields are title, author, year and genre.
+form.errors=Please correct the following errors:
+catalogue.intro=Browse the collection or add a new book.
+catalogue.filter=Filter
+catalogue.reset=Reset
+catalogue.empty=No books found
+genre.FICTION=Fiction
+genre.NON_FICTION=Non-fiction
+genre.SCIENCE=Science
+genre.TECHNOLOGY=Technology
+genre.HISTORY=History
+genre.UNKNOWN=Not specified
+common.yes=Yes
+common.no=No
+error.notfound=Book not found
+error.validation=Validation failed
+typeMismatch.form.year=Enter a whole number for the year
+typeMismatch.form.genre=Choose a genre from the list</code></pre><h3>Листинг 8. messages_ru.properties — полный bundle</h3><p>src/main/resources/messages_ru.properties</p><pre><code>book.catalogue=Каталог книг
+book.new=Новая книга
+book.id=№
+book.title=Название
+book.author=Автор
+book.year=Год
+book.genre=Жанр
+book.genre.choose=Выберите жанр
+book.available=Доступна
+book.added=Книга «{0}» добавлена
+book.title.required=Название не может быть пустым
+book.title.size=Название не длиннее 120 символов
+book.author.required=Автор не может быть пустым
+book.author.nodigits=Имя автора не должно содержать цифры
+book.year.required=Укажите год
+book.year.range=Год должен быть в диапазоне 1450–2100
+book.genre.required=Выберите жанр
+book.notfound=Книга с номером {0} не найдена
+book.search.size=Поисковый запрос должен содержать от 2 до 60 символов
+form.submit=Сохранить
+form.back=Вернуться в каталог
+form.language=Язык
+form.intro=Заполните сведения. Название, автор, год и жанр обязательны.
+form.errors=Исправьте следующие ошибки:
+catalogue.intro=Просматривайте коллекцию и добавляйте новые книги.
+catalogue.filter=Фильтр
+catalogue.reset=Сбросить
+catalogue.empty=Книги не найдены
+genre.FICTION=Художественная литература
+genre.NON_FICTION=Документальная литература
+genre.SCIENCE=Наука
+genre.TECHNOLOGY=Технологии
+genre.HISTORY=История
+genre.UNKNOWN=Не указан
+common.yes=Да
+common.no=Нет
+error.notfound=Книга не найдена
+error.validation=Ошибка валидации
+typeMismatch.form.year=Введите целое число в поле года
+typeMismatch.form.genre=Выберите жанр из списка</code></pre><h2>6. Собственное ограничение @NoDigits</h2><p>@NoDigits имеет обязательные члены message, groups и payload, runtime retention и связь с NoDigitsValidator. null проходит: отсутствие автора проверяет @NotBlank. codePoints(), в отличие от chars(), также проверяет цифры в дополнительных Unicode-плоскостях. Тесты проверяют обычные цифры, арабскую ٢ и математическую 𝟙.</p><h3>Листинг 9. Аннотация @NoDigits</h3><p>src/main/java/kz/iitu/springlab/web/validation/NoDigits.java</p><pre><code>package kz.iitu.springlab.web.validation;
+
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = NoDigitsValidator.class)
+public @interface NoDigits {
+    String message() default &quot;{book.author.nodigits}&quot;;
+    Class&lt;?&gt;[] groups() default {};
+    Class&lt;? extends Payload&gt;[] payload() default {};
+}</code></pre><h3>Листинг 10. NoDigitsValidator</h3><p>src/main/java/kz/iitu/springlab/web/validation/NoDigitsValidator.java</p><pre><code>package kz.iitu.springlab.web.validation;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+
+public class NoDigitsValidator implements ConstraintValidator&lt;NoDigits, String&gt; {
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        return value == null || value.codePoints().noneMatch(Character::isDigit);
+    }
+}</code></pre><figure><img src="screenshots/06-author-digits.png"><figcaption>Рисунок 9. Автор Bloch 2018 отклонён собственным ограничением.</figcaption></figure><h2>7. Централизованная обработка исключений</h2><p>BookService выбрасывает BookNotFoundException для отсутствующего идентификатора. Advice ограничены assignableTypes конкретных контроллеров: это исключает пересечение MVC и REST, поскольку @RestController также является @Controller. Для страницы явно установлен @ResponseStatus(NOT_FOUND): возвращение одного имени шаблона без него дало бы 200. API возвращает RFC 9457 ProblemDetail.</p><table><tr><th>Запрос</th><th>Фактический статус / Content-Type</th><th>Обработчик</th></tr><tr><td>GET /books/999?lang=en</td><td>404 · text/html;charset=UTF-8</td><td>PageExceptionHandler → error/not-found</td></tr><tr><td>GET /api/books/999?lang=en</td><td>404 · application/problem+json</td><td>ApiExceptionHandler → ProblemDetail</td></tr></table><pre><code>{
+  &quot;detail&quot;: &quot;Book with id 999 was not found&quot;,
+  &quot;instance&quot;: &quot;/api/books/999&quot;,
+  &quot;status&quot;: 404,
+  &quot;title&quot;: &quot;Book not found&quot;
+}</code></pre><h3>Листинг 11. BookNotFoundException</h3><p>src/main/java/kz/iitu/springlab/catalog/BookNotFoundException.java</p><pre><code>package kz.iitu.springlab.catalog;
+
+public class BookNotFoundException extends RuntimeException {
+    private final long id;
+
+    public BookNotFoundException(long id) {
+        super(&quot;Book with id &quot; + id + &quot; was not found&quot;);
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
+    }
+}</code></pre><h3>Листинг 12. PageExceptionHandler</h3><p>src/main/java/kz/iitu/springlab/web/PageExceptionHandler.java</p><pre><code>package kz.iitu.springlab.web;
+
+import java.util.Locale;
+import kz.iitu.springlab.catalog.BookNotFoundException;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@ControllerAdvice(assignableTypes = BookPageController.class)
+public class PageExceptionHandler {
+    private final MessageSource messages;
+
+    public PageExceptionHandler(MessageSource messages) {
+        this.messages = messages;
+    }
+
+    @ExceptionHandler(BookNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleNotFound(BookNotFoundException exception, Model model, Locale locale) {
+        model.addAttribute(&quot;message&quot;, messages.getMessage(&quot;book.notfound&quot;,
+                new Object[]{exception.getId()}, locale));
+        return &quot;error/not-found&quot;;
+    }
+}</code></pre><h3>Листинг 13. ApiExceptionHandler</h3><p>src/main/java/kz/iitu/springlab/web/ApiExceptionHandler.java</p><pre><code>package kz.iitu.springlab.web;
+
+import java.util.Locale;
+import java.util.Map;
+import kz.iitu.springlab.catalog.BookNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+
+@RestControllerAdvice(assignableTypes = BookRestController.class)
+public class ApiExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+    private final MessageSource messages;
+
+    public ApiExceptionHandler(MessageSource messages) {
+        this.messages = messages;
+    }
+
+    @ExceptionHandler(BookNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleNotFound(BookNotFoundException exception, Locale locale) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                messages.getMessage(&quot;book.notfound&quot;, new Object[]{exception.getId()}, locale));
+        problem.setTitle(messages.getMessage(&quot;error.notfound&quot;, null, locale));
+        return problem;
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleMethodValidation(HandlerMethodValidationException exception,
+                                               Locale locale) {
+        log.info(&quot;Handled {} in book search&quot;, exception.getClass().getSimpleName());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                messages.getMessage(&quot;book.search.size&quot;, null, locale));
+        problem.setTitle(messages.getMessage(&quot;error.validation&quot;, null, locale));
+        problem.setProperty(&quot;exception&quot;, exception.getClass().getSimpleName());
+        problem.setProperty(&quot;errors&quot;, exception.getParameterValidationResults().stream()
+                .flatMap(result -&gt; result.getResolvableErrors().stream().map(error -&gt; Map.of(
+                        &quot;parameter&quot;, result.getMethodParameter().getParameterName(),
+                        &quot;message&quot;, messages.getMessage(error, locale))))
+                .toList());
+        return problem;
+    }
+}</code></pre><figure><img src="screenshots/11-mvc-404.png"><figcaption>Рисунок 10. MVC возвращает собственную страницу 404.</figcaption></figure><figure><img src="screenshots/12-api-404.png"><figcaption>Рисунок 11. REST возвращает фактический JSON ProblemDetail. Для читаемости изменены только пробелы и отступы JSON.</figcaption></figure><h2>8. Индивидуальное задание — вариант 12</h2><p>Задание: разместить @Size непосредственно на @RequestParam поискового endpoint, показать возникшее исключение и обработать его. Реализован GET /api/books/search?q=…. Длина q должна составлять от 2 до 60 символов включительно; поиск нечувствителен к регистру. Отсутствующий q по умолчанию пуст и отклоняется. Если корректная строка не совпала с названием, возвращается 200 и [].</p><p>Встроенная method validation Spring MVC проверяет параметр до вызова search и при нарушении выбрасывает HandlerMethodValidationException. @Validated на классе отсутствует: иначе включился бы иной путь через AOP. Обработчик возвращает 400 application/problem+json, локализованный текст, фактическое имя исключения и errors с параметром q; имя исключения также записывается в журнал.</p><h3>Листинг 14. BookRestController, включая поиск варианта 12</h3><p>src/main/java/kz/iitu/springlab/web/BookRestController.java</p><pre><code>package kz.iitu.springlab.web;
+
+import jakarta.validation.constraints.Size;
+import java.net.URI;
+import java.util.List;
+import kz.iitu.springlab.catalog.Book;
+import kz.iitu.springlab.catalog.BookService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+@RestController
+@RequestMapping(&quot;/api/books&quot;)
+public class BookRestController {
+    private final BookService service;
+
+    public BookRestController(BookService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public List&lt;Book&gt; list(@RequestParam(required = false) String author,
+                           @RequestParam(defaultValue = &quot;10&quot;) int limit) {
+        if (limit &lt; 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;limit must not be negative&quot;);
+        }
+        return service.findAll(author).stream().limit(limit).toList();
+    }
+
+    // Spring MVC performs method validation; class-level @Validated is intentionally absent.
+    @GetMapping(&quot;/search&quot;)
+    public List&lt;Book&gt; search(@RequestParam(defaultValue = &quot;&quot;)
+                            @Size(min = 2, max = 60, message = &quot;{book.search.size}&quot;) String q) {
+        return service.search(q);
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Book&gt; find(@PathVariable long id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;Book&gt; create(@RequestBody BookRequest book) {
+        Book saved = service.create(book.toBook());
+        return ResponseEntity.created(URI.create(&quot;/api/books/&quot; + saved.id())).body(saved);
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Book&gt; replace(@PathVariable long id, @RequestBody BookRequest book) {
+        return ResponseEntity.ok(service.replace(id, book.toBook()));
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}</code></pre><table><tr><th>Запрос / длина</th><th>Результат</th></tr><tr><td>q=Java</td><td>200, Effective Java</td></tr><tr><td>q=eFfEcTiVe</td><td>200, поиск нечувствителен к регистру</td></tr><tr><td>q отсутствует / 0</td><td>400 HandlerMethodValidationException</td></tr><tr><td>q=a / 1</td><td>400 HandlerMethodValidationException</td></tr><tr><td>q=xx / 2</td><td>200 []</td></tr><tr><td>60 символов x</td><td>200 []</td></tr><tr><td>61 символ x</td><td>400 HandlerMethodValidationException</td></tr><tr><td>q=a&amp;lang=ru</td><td>400, русский текст в detail и errors</td></tr></table><pre><code>{
+  &quot;detail&quot;: &quot;The search query must contain between 2 and 60 characters&quot;,
+  &quot;instance&quot;: &quot;/api/books/search&quot;,
+  &quot;status&quot;: 400,
+  &quot;title&quot;: &quot;Validation failed&quot;,
+  &quot;exception&quot;: &quot;HandlerMethodValidationException&quot;,
+  &quot;errors&quot;: [
+    {
+      &quot;parameter&quot;: &quot;q&quot;,
+      &quot;message&quot;: &quot;The search query must contain between 2 and 60 characters&quot;
+    }
+  ]
+}</code></pre><figure><img src="screenshots/13-search-valid.png"><figcaption>Рисунок 12. Корректный запрос q=Java возвращает найденную книгу.</figcaption></figure><figure><img src="screenshots/14-search-validation.png"><figcaption>Рисунок 13. q=a: 400 и HandlerMethodValidationException в обработанном ответе.</figcaption></figure><figure><img src="screenshots/15-search-validation-ru.png"><figcaption>Рисунок 14. Та же ошибка method validation на русском языке.</figcaption></figure><h2>9. Проверка основы лабораторной №5</h2><p>REST принимает отдельный BookRequest. Новые поля жанра и доступности являются необязательными для старого JSON запроса; это сохраняет команды из методички №5. Идентификатор присваивает репозиторий, PUT использует id из URL, а повторный DELETE возвращает 404.</p><table><tr><th>Операция</th><th>Проверенный результат</th></tr><tr><td>GET /api/books?author=Bloch&amp;limit=1</td><td>200, JSON содержит Joshua Bloch</td></tr><tr><td>GET /api/books/{id}</td><td>200 для существующего; 404 ProblemDetail для отсутствующего</td></tr><tr><td>POST /api/books</td><td>201 + Location; созданный ресурс читается по Location</td></tr><tr><td>PUT /api/books/{id}</td><td>200 и заменённая запись; 404 для отсутствующего</td></tr><tr><td>DELETE /api/books/{id}</td><td>204, пустое тело; повторный DELETE 404</td></tr></table><table><tr><th>Эксперимент</th><th>Статус</th><th>Причина</th></tr><tr><td>GET /api/books/abc</td><td>400</td><td>abc не преобразуется в long @PathVariable</td></tr><tr><td>GET /api/nothing</td><td>404</td><td>Нет такого маршрута или статического ресурса</td></tr><tr><td>DELETE /api/books</td><td>405</td><td>Метод DELETE не объявлен для пути без id</td></tr><tr><td>POST /api/books, Content-Type: text/plain</td><td>415</td><td>Нет подходящего converter для BookRequest из text/plain</td></tr><tr><td>GET /api/books, Accept: application/xml</td><td>406</td><td>Не удаётся представить ответ поддерживаемым converter в требуемом формате</td></tr></table><figure><img src="screenshots/01-catalogue.png"><figcaption>Рисунок 15. Каталог и статический CSS; начальные три книги.</figcaption></figure><figure><img src="screenshots/02-filter.png"><figcaption>Рисунок 16. Фильтр author=Bloch оставляет одну запись.</figcaption></figure><h2>10. Автоматические проверки и воспроизведение</h2><p>Выполнено bash mvnw -s /workspace/.tools/maven-settings.xml -B verify с Java 25. Команда завершилась BUILD SUCCESS; создан запускаемый JAR. После исправлений повторно выполнен полный набор, затем отдельно проверено повторяемое облачное setup-описание. Сервер запускался из собранного JAR; браузерные проверки выполнены настоящим headless Chromium через Playwright.</p><table><tr><th>Набор</th><th>Выполнено</th><th>Failures / Errors / Skipped</th></tr><tr><td>BookWorkflowTests</td><td>25</td><td>0 / 0 / 0</td></tr><tr><td>NoDigitsValidatorTests</td><td>6</td><td>0 / 0 / 0</td></tr><tr><td>SpringLab01ApplicationTests</td><td>1</td><td>0 / 0 / 0</td></tr><tr><td>Итого</td><td>32</td><td>0 / 0 / 0</td></tr></table><p>Тесты проверяют не только загрузку контекста: отсутствие записи при ошибках, границы года и поисковой строки, недопустимый enum, нечисловой ввод, русский locale в сессии, однократность flash, сохранение genre/available, запрет подмены id, escaping введённого HTML, REST CRUD и HTTP-ошибки. Браузерные наблюдения сохранены в docs/browser-checks.json; PNG — в docs/screenshots. Проверки демонстрируют техническое выполнение работы; очная демонстрация преподавателю выполняется студентом.</p><pre><code>bash mvnw clean verify
+java -jar target/spring-lab-01-0.0.1-SNAPSHOT.jar
+
+# Для подготовленной облачной среды:
+source /workspace/.tools/java-env.sh
+bash mvnw -s /workspace/.tools/maven-settings.xml -B verify
+
+# Скриншоты (Chromium и Playwright):
+python scripts/capture-evidence.py</code></pre><p>Для демонстрации используется default profile и порт 8080. Существующий dev profile использует 8081. База данных и секреты не требуются; после перезапуска данные в памяти сбрасываются. Реальная отправка почты для этого задания не требуется. Облачный Maven использует поддерживаемый proxy и существующий system trust store без отключения TLS.</p><p>Windows: рабочая папка студента C:\Labworks\Spring\spring-lab-01-main. После получения файлов lab06 и установки JDK 25 выполнить следующие команды PowerShell. Существующую папку и локальные изменения следует сохранить до замены; полный Git-проект можно клонировать в соседнюю новую папку, как описано в README.</p><pre><code>Set-Location &#x27;C:\Labworks\Spring\spring-lab-01-main&#x27;
+.\mvnw.cmd clean verify
+java -jar .\target\spring-lab-01-0.0.1-SNAPSHOT.jar</code></pre><h2>11. Вопросы для защиты</h2><h3>Почему форма отдельно от Book?</h3><p>Правила пользовательского ввода и изменяемое состояние формы отделены от доменной записи; id не участвует в связывании и mass assignment.</p><h3>Что делают th:object и *{title}?</h3><p>th:object выбирает объект модели form; *{title} читает или связывает его свойство title.</p><h3>Что генерирует th:field?</h3><p>name, id, value, selected/checked и служебный hidden marker для checkbox; при ошибке использует rejected value из BindingResult.</p><h3>Зачем пустой объект в GET?</h3><p>Он нужен для оценки th:field и для исходных значений до первого POST.</p><h3>Что если убрать @Valid?</h3><p>Связывание и преобразование типов останутся, но Bean Validation ограничений формы не выполнится.</p><h3>Что если переместить BindingResult после Model?</h3><p>Spring не свяжет его с валидируемым объектом непосредственно перед ним; ошибочная форма может привести к исключению вместо обычного возврата шаблона.</p><h3>Почему genres снова в модели?</h3><p>Список вариантов не приходит в POST и не хранится в BookForm; его нужно предоставить при каждом рендеринге формы.</p><h3>Куда попадают ошибки формы?</h3><p>В BindingResult как FieldError или ObjectError. Контроллер проверяет hasErrors; это отличается от исключения method validation варианта 12.</p><h3>NotNull, NotEmpty, NotBlank?</h3><p>NotNull запрещает null; NotEmpty также пустую строку/коллекцию; NotBlank проверяет строку после учёта пробелов.</p><h3>Откуда текст ошибки?</h3><p>Ключ в message=&quot;{book.title.required}&quot; разрешается валидатором через MessageSource и активный Locale; th:errors выводит полученный текст.</p><h3>Field error и global error?</h3><p>Первый относится к конкретному свойству, второй — ко всему объекту, например при class-level constraint. В реализованной форме ограничения дают field errors.</p><h3>Зачем messages.properties?</h3><p>Это обязательный default bundle для автоконфигурации MessageSource и fallback для отсутствующих переводов.</p><h3>Как определяется язык?</h3><p>lang читает LocaleChangeInterceptor; SessionLocaleResolver сохраняет выбор в HTTP-сессии; default — English.</p><h3>Три обязательных члена constraint?</h3><p>message задаёт текст или ключ, groups — группы валидации, payload — дополнительные метаданные нарушения.</p><h3>Почему null допустим для NoDigits?</h3><p>Ограничение отвечает только за цифры; обязательность значения отдельно проверяет NotBlank.</p><h3>Как разделены advice?</h3><p>assignableTypes = BookPageController.class и BookRestController.class. Без ограничения общий обработчик мог бы вернуть неправильный формат ответа.</p><h3>Как выбирается обработчик?</h3><p>Внутри применимого контроллера/advice учитывается наиболее конкретный тип исключения; между advice также важен порядок @Order, а локальные обработчики контроллера проверяются раньше.</p><h3>Чем опасен th:utext?</h3><p>Он вставляет пользовательский HTML без escaping и может привести к XSS. Здесь используется th:text и безопасное связывание th:field.</p><h3>Какое исключение у варианта 12?</h3><p>HandlerMethodValidationException от встроенной Spring MVC validation; ApiExceptionHandler превращает его в 400 ProblemDetail с именем q и локализованным сообщением.</p><h2>12. Выводы</h2><p>Декларативная валидация позволяет описать правила возле свойств формы и повторно использовать ограничения без ручных if в контроллере. BindingResult связывает нарушения с конкретными полями, сохраняя введённые пользователем данные. Resource bundles отделяют тексты от кода и позволяют менять язык интерфейса и ошибок одновременно. Controller advice и method validation дают согласованные ответы для HTML-клиента и REST API, а Post/Redirect/Get предотвращает повторное создание записи при обновлении страницы.</p><h2>13. Источники</h2><p>Методичка Laboratory_work_6_EN.docx — основное задание, вариант 12 и требования к отчёту.</p><p>Методичка Laboratory_work_5_EN.docx — восстановление основы REST и MVC каталога.</p><p>Spring Framework: https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html</p><p>Spring Boot: https://docs.spring.io/spring-boot/reference/features/internationalization.html</p><p>Thymeleaf: https://www.thymeleaf.org/doc/tutorials/3.1/thymeleafspring.html</p><h2>Приложение. Хранилище и сервис</h2><h3>Листинг 15. BookRepository</h3><p>src/main/java/kz/iitu/springlab/catalog/BookRepository.java</p><pre><code>package kz.iitu.springlab.catalog;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookRepository {
+    private final ConcurrentHashMap&lt;Long, Book&gt; storage = new ConcurrentHashMap&lt;&gt;();
+    private final AtomicLong sequence = new AtomicLong();
+
+    public BookRepository() {
+        create(new Book(null, &quot;Effective Java&quot;, &quot;Joshua Bloch&quot;, 2018));
+        create(new Book(null, &quot;Clean Code&quot;, &quot;Robert Martin&quot;, 2008));
+        create(new Book(null, &quot;Spring in Action&quot;, &quot;Craig Walls&quot;, 2022));
+    }
+
+    public List&lt;Book&gt; findAll() {
+        return storage.values().stream().sorted(Comparator.comparing(Book::id)).toList();
+    }
+
+    public Optional&lt;Book&gt; findById(long id) {
+        return Optional.ofNullable(storage.get(id));
+    }
+
+    public Book create(Book book) {
+        long id = sequence.incrementAndGet();
+        Book saved = withId(id, book);
+        storage.put(id, saved);
+        return saved;
+    }
+
+    public Optional&lt;Book&gt; replace(long id, Book book) {
+        return Optional.ofNullable(storage.computeIfPresent(id, (_, _) -&gt; withId(id, book)));
+    }
+
+    public boolean deleteById(long id) {
+        return storage.remove(id) != null;
+    }
+
+    private Book withId(long id, Book book) {
+        return new Book(id, book.title(), book.author(), book.year(), book.genre(), book.available());
+    }
+}</code></pre><h3>Листинг 16. BookService</h3><p>src/main/java/kz/iitu/springlab/catalog/BookService.java</p><pre><code>package kz.iitu.springlab.catalog;
+
+import java.util.List;
+import java.util.Locale;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookService {
+    private final BookRepository repository;
+
+    public BookService(BookRepository repository) {
+        this.repository = repository;
+    }
+
+    public List&lt;Book&gt; findAll(String author) {
+        return repository.findAll().stream()
+                .filter(book -&gt; author == null || book.author().toLowerCase(Locale.ROOT)
+                        .contains(author.toLowerCase(Locale.ROOT)))
+                .toList();
+    }
+
+    public List&lt;Book&gt; search(String query) {
+        String fragment = query.toLowerCase(Locale.ROOT);
+        return repository.findAll().stream()
+                .filter(book -&gt; book.title().toLowerCase(Locale.ROOT).contains(fragment)).toList();
+    }
+
+    public Book findById(long id) {
+        return repository.findById(id).orElseThrow(() -&gt; new BookNotFoundException(id));
+    }
+
+    public Book create(Book book) {
+        return repository.create(book);
+    }
+
+    public Book replace(long id, Book book) {
+        return repository.replace(id, book).orElseThrow(() -&gt; new BookNotFoundException(id));
+    }
+
+    public void delete(long id) {
+        if (!repository.deleteById(id)) {
+            throw new BookNotFoundException(id);
+        }
+    }
+}</code></pre><h3>Листинг 17. BookRequest — совместимость REST с №5</h3><p>src/main/java/kz/iitu/springlab/web/BookRequest.java</p><pre><code>package kz.iitu.springlab.web;
+
+import kz.iitu.springlab.catalog.Book;
+
+/** Keeps the lab 5 JSON body compatible while accepting the new optional fields. */
+public record BookRequest(String title, String author, int year, Genre genre, Boolean available) {
+    public Book toBook() {
+        return new Book(null, title, author, year,
+                genre == null ? Genre.TECHNOLOGY : genre,
+                available == null || available);
+    }
+}</code></pre></body></html>

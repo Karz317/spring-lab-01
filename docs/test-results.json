@@ -1,0 +1,27 @@
+{
+  "command": "bash mvnw -s /workspace/.tools/maven-settings.xml -B verify",
+  "result": "BUILD SUCCESS",
+  "suites": [
+    {
+      "suite": "kz.iitu.springlab.BookWorkflowTests",
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "kz.iitu.springlab.NoDigitsValidatorTests",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "kz.iitu.springlab.SpringLab01ApplicationTests",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ]
+}

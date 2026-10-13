@@ -15,6 +15,24 @@ java -jar target/spring-lab-01-0.0.1-SNAPSHOT.jar
 ```
 
 Use the default profile (port **8080**); the existing `dev` profile uses **8081**.
+
+On Windows, with the updated files in your directory and JDK 25 on PATH:
+
+```powershell
+Set-Location 'C:\Labworks\Spring\spring-lab-01-main'
+.\mvnw.cmd clean verify
+java -jar .\target\spring-lab-01-0.0.1-SNAPSHOT.jar
+```
+
+If this folder contains a downloaded `main` ZIP, it does not have Git history.
+The delivered project ZIP contains `lab06` files; preserve your existing folder
+before replacing it. To obtain the Git history, clone the `lab06` branch into a
+new folder:
+
+```powershell
+git clone --branch lab06 https://github.com/Karz317/spring-lab-01.git C:\Labworks\Spring\spring-lab-01-lab06
+```
+
 Open `/books` and `/books/new` on the running server. Data is held in memory;
 restarting restores three example books. The form persists genre and availability
 along with title, author and year. A separate `BookRequest` keeps the old REST JSON
@@ -76,3 +94,12 @@ python scripts/capture-evidence.py --chromium /usr/bin/chromium
 
 The screenshot script submits one valid demonstration book and creates/deletes a
 temporary REST book. Run it against a disposable in-memory demonstration instance.
+
+To regenerate DOCX and PDF from the current source and PNG evidence:
+
+```bash
+python -m pip install python-docx playwright
+python scripts/generate-report.py
+```
+
+The report generator requires a local Chromium executable at `/usr/bin/chromium`.
