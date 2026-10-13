@@ -30,173 +30,173 @@ def listing(title, path):
     code((root / path).read_text(), 'html' if path.endswith('.html') else 'properties' if path.endswith('.properties') else 'java')
 def screenshot(name, caption): nodes.append(('image', ('screenshots/' + name + '.png', caption)))
 
-heading('1. Цель и исходный проект')
-paragraph('Цель работы — реализовать обработку формы книги средствами Spring MVC и Thymeleaf: связывание полей, декларативную валидацию, сохранение введённых значений при ошибках, локализацию и централизованную обработку исключений. Индивидуальное задание — вариант 12: method validation параметра поискового запроса.')
-paragraph('Студент: Kassymzhanov Arzum. Группа: IT1-2404IS. Курс: RWPSF 3305 — Web Application Development with Spring Framework. Лабораторная работа №6: Forms and validation.')
-paragraph('Репозиторий и ветка: https://github.com/Karz317/spring-lab-01/tree/lab06')
-paragraph('Исходная ветка lab04, коммит bfaaf1278571960107ff2940e7cb27d4bb328b31. В доступном репозитории отсутствовала основа лабораторной №5, поэтому добавлены Book, BookRepository, BookService, REST CRUD, страницы каталога, фильтр, CSS и стартовая страница. Существующий код лабораторных №2–4 сохранён. Коммит реализации №6: ' + implementation + '.')
-table(['Компонент', 'Фактически использовано'], [
-    ['Java', 'JDK 25.0.4.1 LTS; SHA-256 архива проверен'],
+heading('1. Aim and project baseline')
+paragraph('The aim of this work is to implement book form processing with Spring MVC and Thymeleaf: field binding, declarative validation, preservation of submitted values after errors, internationalization and centralized exception handling. The individual assignment is Variant 12: method validation of a search request parameter.')
+paragraph('Student: Kassymzhanov Arzum. Group: IT1-2404IS. Course: RWPSF 3305 — Web Application Development with Spring Framework. Laboratory Work No. 6: Forms and validation.')
+paragraph('Repository and branch: https://github.com/Karz317/spring-lab-01/tree/lab06')
+paragraph('The baseline is branch lab04, commit bfaaf1278571960107ff2940e7cb27d4bb328b31. The available repository did not contain the catalogue from Laboratory Work No. 5, so Book, BookRepository, BookService, REST CRUD operations, catalogue pages, an author filter, CSS and a welcome page were added. The existing code from laboratory works 2–4 was preserved. Implementation commit for Laboratory Work No. 6: ' + implementation + '.')
+table(['Component', 'Actual configuration'], [
+    ['Java', 'JDK 25.0.4.1 LTS; archive SHA-256 verified'],
     ['Spring Boot', '4.1.1'], ['Maven', '3.9.16, repository wrapper'],
-    ['Представления', 'Thymeleaf; английский и русский resource bundles'],
-    ['Валидация', 'Jakarta Bean Validation, Hibernate Validator'],
-    ['Хранилище', 'ConcurrentHashMap; три начальные книги; данные в памяти'],
-    ['Проверки', '32 автоматических теста; 23 записи браузерных/HTTP-проверок'],
+    ['Views', 'Thymeleaf; English and Russian resource bundles'],
+    ['Validation', 'Jakarta Bean Validation, Hibernate Validator'],
+    ['Storage', 'ConcurrentHashMap; three initial books; in-memory data'],
+    ['Verification', '32 automated tests; 23 browser/HTTP check records'],
 ])
 
-heading('2. Модель формы и правила валидации')
-paragraph('BookForm отделён от неизменяемого record Book. Getters и setters позволяют WebDataBinder заполнить объект частично и вернуть его в форму вместе с BindingResult. Пользователь не может связать форму с id: @InitBinder разрешает только title, author, year, genre и available. В отличие от примера методички, год представлен Integer с @NotNull: пустое поле получает понятное сообщение «Укажите год», а не превращается в 0.')
-table(['Поле', 'Ограничение', 'Поведение'], [
-    ['title', '@NotBlank, @Size(max=120)', 'Пустая строка, пробелы и 121 символ отклоняются'],
-    ['author', '@NotBlank, @NoDigits', 'Имя обязательно; цифры, включая Unicode, запрещены'],
-    ['year', '@NotNull, @Min(1450), @Max(2100)', 'Границы 1450 и 2100 допустимы; пустое и нечисловое значение отклоняются'],
-    ['genre', '@NotNull', 'Выбор жанра обязателен; неизвестное значение даёт ошибку связывания'],
-    ['available', 'boolean', 'Значение checkbox сохраняется в Book'],
+heading('2. Form object and validation rules')
+paragraph('BookForm is separate from the immutable Book record. Getters and setters allow WebDataBinder to populate the object partially and redisplay it together with BindingResult. Users cannot bind an id through the form: @InitBinder allows only title, author, year, genre and available. Unlike the primitive int in the handout, the year uses Integer with @NotNull: an empty input receives the message “The year is required” rather than becoming 0.')
+table(['Field', 'Constraint', 'Behavior'], [
+    ['title', '@NotBlank, @Size(max=120)', 'An empty string, whitespace-only input and 121 characters are rejected'],
+    ['author', '@NotBlank, @NoDigits', 'The name is required; digits, including Unicode digits, are forbidden'],
+    ['year', '@NotNull, @Min(1450), @Max(2100)', '1450 and 2100 are accepted; empty and nonnumeric values are rejected'],
+    ['genre', '@NotNull', 'A genre must be selected; an unknown enum value produces a binding error'],
+    ['available', 'boolean', 'The checkbox value is persisted in Book'],
 ])
-listing('Листинг 1. BookForm', 'src/main/java/kz/iitu/springlab/web/BookForm.java')
-listing('Листинг 2. Genre', 'src/main/java/kz/iitu/springlab/web/Genre.java')
-listing('Листинг 3. Book', 'src/main/java/kz/iitu/springlab/catalog/Book.java')
+listing('Listing 1. BookForm', 'src/main/java/kz/iitu/springlab/web/BookForm.java')
+listing('Listing 2. Genre', 'src/main/java/kz/iitu/springlab/web/Genre.java')
+listing('Listing 3. Book', 'src/main/java/kz/iitu/springlab/catalog/Book.java')
 
-heading('3. Контроллер и шаблон формы')
-paragraph('GET /books/new помещает в модель новый BookForm и Genre.values(). В POST параметр BindingResult расположен непосредственно после @Valid @ModelAttribute("form"). Если имеются ошибки, genres снова добавляется в модель и возвращается books/form. При успехе создаётся книга, локализованное сообщение передаётся через flash и выполняется redirect:/books.')
-paragraph('th:object задаёт объект формы; *{title} обращается к его свойству. th:field генерирует name, id и value, а для select и checkbox — выбранное состояние. th:errors показывает сообщения; th:errorclass выделяет поле. Блок #fields размещён внутри области th:object, чтобы summary имел доступ к BindingResult. novalidate позволяет продемонстрировать именно серверную проверку.')
-listing('Листинг 4. BookPageController: GET, POST, PRG', 'src/main/java/kz/iitu/springlab/web/BookPageController.java')
-listing('Листинг 5. templates/books/form.html', 'src/main/resources/templates/books/form.html')
+heading('3. Controller and form template')
+paragraph('GET /books/new adds a new BookForm and Genre.values() to the model. In the POST handler, BindingResult is placed immediately after @Valid @ModelAttribute("form"). If errors exist, genres is added back to the model and books/form is returned. A valid submission creates a book, adds a localized flash message and returns redirect:/books.')
+paragraph('th:object selects the form object; *{title} refers to its property. th:field generates name, id and value, as well as selected or checked states for select and checkbox controls. th:errors displays messages, and th:errorclass highlights the field. The #fields error summary is inside the th:object scope so it can access BindingResult. novalidate makes the server-side validation visible during the demonstration.')
+listing('Listing 4. BookPageController: GET, POST and PRG', 'src/main/java/kz/iitu/springlab/web/BookPageController.java')
+listing('Listing 5. templates/books/form.html', 'src/main/resources/templates/books/form.html')
 
-heading('4. Проверка формы и Post/Redirect/Get')
-table(['Ввод / действие', 'Результат'], [
-    ['Пустое название; остальные поля заполнены', '200 HTML; ошибка title; автор, год, жанр и checkbox сохранены; новая книга не создана'],
-    ['Год 1200', '200 HTML; book.year.range рядом с полем и в summary; введённый 1200 остаётся'],
-    ['Жанр не выбран', '200 HTML; book.genre.required; остальные значения остаются'],
-    ['Автор Bloch 2018', '200 HTML; срабатывает собственный @NoDigits'],
-    ['Пустое название + 1200 + без жанра', 'Все три ошибки одновременно перечислены в summary'],
-    ['Корректная форма', 'POST /books → 302 Location: /books → GET /books → 200; новая книга и flash'],
-    ['Обновление страницы', 'Повторный GET 200; flash исчез; число книг осталось 4'],
+heading('4. Form checks and Post/Redirect/Get')
+table(['Input / action', 'Observed result'], [
+    ['Empty title; other fields completed', '200 HTML; title error; author, year, genre and checkbox preserved; no new book created'],
+    ['Year 1200', '200 HTML; book.year.range beside the field and in the summary; 1200 remains in the input'],
+    ['No genre selected', '200 HTML; book.genre.required; other values remain'],
+    ['Author Bloch 2018', '200 HTML; the custom @NoDigits constraint rejects the value'],
+    ['Empty title + year 1200 + no genre', 'All three errors appear together in the summary'],
+    ['Valid form', 'POST /books → 302 Location: /books → GET /books → 200; a new book and flash message'],
+    ['Page refresh', 'Another GET returns 200; the flash message disappears; the book count remains 4'],
 ])
 for name, caption in [
-    ('03-empty-title', 'Рисунок 1. Пустое название отклонено; Joshua Bloch, 2018 и Technology сохранены.'),
-    ('04-year-range', 'Рисунок 2. Год 1200 отклонён; неверное значение остаётся в поле.'),
-    ('05-no-genre', 'Рисунок 3. Жанр обязателен; остальные поля не потеряны.'),
-    ('09-success-flash', 'Рисунок 4. Успешный POST: после перенаправления появилась новая книга и flash.'),
-    ('10-refresh-no-duplicate', 'Рисунок 5. После обновления flash отсутствует; в каталоге остаются четыре книги.'),
-    ('08-combined-errors', 'Рисунок 6. Summary показывает несколько ошибок одновременно.'),
+    ('03-empty-title', 'Figure 1. An empty title is rejected; Joshua Bloch, 2018 and Technology are preserved.'),
+    ('04-year-range', 'Figure 2. Year 1200 is rejected; the invalid value remains visible in the field.'),
+    ('05-no-genre', 'Figure 3. A genre is required; the other submitted fields are preserved.'),
+    ('09-success-flash', 'Figure 4. Successful POST: the redirect shows the new book and a flash message.'),
+    ('10-refresh-no-duplicate', 'Figure 5. After refresh, the flash message is absent and the catalogue still contains four books.'),
+    ('08-combined-errors', 'Figure 6. The error summary lists several violations simultaneously.'),
 ]: screenshot(name, caption)
-paragraph('FlashMap хранит сообщение между POST и последующим GET, обычно с использованием HTTP-сессии. После совпавшего GET оно потребляется. F5 повторяет GET, а не POST: повторного service.create нет.')
+paragraph('FlashMap stores the message between the POST and the following GET, normally through the HTTP session. The matching GET consumes it. Pressing F5 repeats the GET and does not invoke service.create again.')
 
-heading('5. Локализация интерфейса и сообщений')
-paragraph('SessionLocaleResolver использует английский язык по умолчанию и хранит выбор в сессии. LocaleChangeInterceptor читает lang. Подписи, названия жанров, ошибки Bean Validation, ошибки преобразования типов, flash и страница 404 берутся из resource bundles. Обязательный messages.properties позволяет Spring Boot настроить MessageSource; messages_ru.properties содержит русский вариант. Скриншоты ниже показывают одинаковую ошибку title на обоих языках.')
-screenshot('03-empty-title', 'Рисунок 7. Английские подписи и сообщение The title must not be empty.')
-screenshot('07-russian-validation', 'Рисунок 8. Русские подписи, жанр и сообщение «Название не может быть пустым».')
-listing('Листинг 6. LocaleConfiguration', 'src/main/java/kz/iitu/springlab/config/LocaleConfiguration.java')
-listing('Листинг 7. messages.properties — полный bundle', 'src/main/resources/messages.properties')
-listing('Листинг 8. messages_ru.properties — полный bundle', 'src/main/resources/messages_ru.properties')
+heading('5. Interface and message internationalization')
+paragraph('SessionLocaleResolver defaults to English and stores the selected locale in the session. LocaleChangeInterceptor reads lang. Labels, genre names, Bean Validation messages, type-conversion errors, flash messages and the 404 page use resource bundles. The mandatory messages.properties enables Spring Boot to configure MessageSource; messages_ru.properties contains the Russian translations. The following screenshots show the same title error in both languages. Russian text is retained in the localization screenshots and source bundle as evidence of the required second language.')
+screenshot('03-empty-title', 'Figure 7. English labels and the validation message “The title must not be empty”.')
+screenshot('07-russian-validation', 'Figure 8. Russian labels, genre name and validation message for the same empty-title error.')
+listing('Listing 6. LocaleConfiguration', 'src/main/java/kz/iitu/springlab/config/LocaleConfiguration.java')
+listing('Listing 7. messages.properties — complete default bundle', 'src/main/resources/messages.properties')
+listing('Listing 8. messages_ru.properties — complete Russian bundle', 'src/main/resources/messages_ru.properties')
 
-heading('6. Собственное ограничение @NoDigits')
-paragraph('@NoDigits имеет обязательные члены message, groups и payload, runtime retention и связь с NoDigitsValidator. null проходит: отсутствие автора проверяет @NotBlank. codePoints(), в отличие от chars(), также проверяет цифры в дополнительных Unicode-плоскостях. Тесты проверяют обычные цифры, арабскую ٢ и математическую 𝟙.')
-listing('Листинг 9. Аннотация @NoDigits', 'src/main/java/kz/iitu/springlab/web/validation/NoDigits.java')
-listing('Листинг 10. NoDigitsValidator', 'src/main/java/kz/iitu/springlab/web/validation/NoDigitsValidator.java')
-screenshot('06-author-digits', 'Рисунок 9. Автор Bloch 2018 отклонён собственным ограничением.')
+heading('6. Custom constraint @NoDigits')
+paragraph('@NoDigits defines the mandatory message, groups and payload members, runtime retention and the link to NoDigitsValidator. A null value passes because @NotBlank handles a missing author. codePoints(), unlike chars(), also recognizes digits in supplementary Unicode planes. Tests cover ordinary digits, the Arabic digit ٢ and the mathematical digit 𝟙.')
+listing('Listing 9. The @NoDigits annotation', 'src/main/java/kz/iitu/springlab/web/validation/NoDigits.java')
+listing('Listing 10. NoDigitsValidator', 'src/main/java/kz/iitu/springlab/web/validation/NoDigitsValidator.java')
+screenshot('06-author-digits', 'Figure 9. The custom constraint rejects the author value Bloch 2018.')
 
-heading('7. Централизованная обработка исключений')
-paragraph('BookService выбрасывает BookNotFoundException для отсутствующего идентификатора. Advice ограничены assignableTypes конкретных контроллеров: это исключает пересечение MVC и REST, поскольку @RestController также является @Controller. Для страницы явно установлен @ResponseStatus(NOT_FOUND): возвращение одного имени шаблона без него дало бы 200. API возвращает RFC 9457 ProblemDetail.')
-table(['Запрос', 'Фактический статус / Content-Type', 'Обработчик'], [
+heading('7. Centralized exception handling')
+paragraph('BookService throws BookNotFoundException when an identifier is missing. Each advice is scoped to a specific controller through assignableTypes. This avoids overlap between MVC and REST, since @RestController is also a @Controller. The page handler explicitly declares @ResponseStatus(NOT_FOUND); returning only a template name would otherwise produce status 200. The API returns an RFC 9457 ProblemDetail.')
+table(['Request', 'Observed status / Content-Type', 'Handler'], [
     ['GET /books/999?lang=en', '404 · text/html;charset=UTF-8', 'PageExceptionHandler → error/not-found'],
     ['GET /api/books/999?lang=en', '404 · application/problem+json', 'ApiExceptionHandler → ProblemDetail'],
 ])
 code(json.dumps(next(x['body'] for x in json.loads((docs/'browser-checks.json').read_text()) if x.get('request')=='GET /api/books/999?lang=en'), ensure_ascii=False, indent=2), 'json')
-listing('Листинг 11. BookNotFoundException', 'src/main/java/kz/iitu/springlab/catalog/BookNotFoundException.java')
-listing('Листинг 12. PageExceptionHandler', 'src/main/java/kz/iitu/springlab/web/PageExceptionHandler.java')
-listing('Листинг 13. ApiExceptionHandler', 'src/main/java/kz/iitu/springlab/web/ApiExceptionHandler.java')
-screenshot('11-mvc-404', 'Рисунок 10. MVC возвращает собственную страницу 404.')
-screenshot('12-api-404', 'Рисунок 11. REST возвращает фактический JSON ProblemDetail. Для читаемости изменены только пробелы и отступы JSON.')
+listing('Listing 11. BookNotFoundException', 'src/main/java/kz/iitu/springlab/catalog/BookNotFoundException.java')
+listing('Listing 12. PageExceptionHandler', 'src/main/java/kz/iitu/springlab/web/PageExceptionHandler.java')
+listing('Listing 13. ApiExceptionHandler', 'src/main/java/kz/iitu/springlab/web/ApiExceptionHandler.java')
+screenshot('11-mvc-404', 'Figure 10. MVC returns the custom HTML 404 page.')
+screenshot('12-api-404', 'Figure 11. REST returns the actual JSON ProblemDetail. Only JSON whitespace and indentation were formatted for readability.')
 
-heading('8. Индивидуальное задание — вариант 12')
-paragraph('Задание: разместить @Size непосредственно на @RequestParam поискового endpoint, показать возникшее исключение и обработать его. Реализован GET /api/books/search?q=…. Длина q должна составлять от 2 до 60 символов включительно; поиск нечувствителен к регистру. Отсутствующий q по умолчанию пуст и отклоняется. Если корректная строка не совпала с названием, возвращается 200 и [].')
-paragraph('Встроенная method validation Spring MVC проверяет параметр до вызова search и при нарушении выбрасывает HandlerMethodValidationException. @Validated на классе отсутствует: иначе включился бы иной путь через AOP. Обработчик возвращает 400 application/problem+json, локализованный текст, фактическое имя исключения и errors с параметром q; имя исключения также записывается в журнал.')
-listing('Листинг 14. BookRestController, включая поиск варианта 12', 'src/main/java/kz/iitu/springlab/web/BookRestController.java')
-table(['Запрос / длина', 'Результат'], [
-    ['q=Java', '200, Effective Java'], ['q=eFfEcTiVe', '200, поиск нечувствителен к регистру'],
-    ['q отсутствует / 0', '400 HandlerMethodValidationException'], ['q=a / 1', '400 HandlerMethodValidationException'],
-    ['q=xx / 2', '200 []'], ['60 символов x', '200 []'], ['61 символ x', '400 HandlerMethodValidationException'],
-    ['q=a&lang=ru', '400, русский текст в detail и errors'],
+heading('8. Individual assignment — Variant 12')
+paragraph('Assignment: place @Size directly on a @RequestParam of the search endpoint, demonstrate the resulting exception and handle it. The implementation provides GET /api/books/search?q=…. The query must contain 2–60 characters inclusive, and title matching is case-insensitive. A missing q defaults to an empty string and is rejected. A valid query without matching books returns 200 and [].')
+paragraph('Spring MVC built-in method validation checks the parameter before invoking search and throws HandlerMethodValidationException when the constraint is violated. The controller has no class-level @Validated, which would select a different AOP validation path. The handler returns 400 application/problem+json with localized text, the actual exception name and errors identifying parameter q. The exception type is also written to the application log.')
+listing('Listing 14. BookRestController, including the Variant 12 search endpoint', 'src/main/java/kz/iitu/springlab/web/BookRestController.java')
+table(['Request / length', 'Result'], [
+    ['q=Java', '200, Effective Java'], ['q=eFfEcTiVe', '200, case-insensitive matching'],
+    ['Missing q / 0', '400 HandlerMethodValidationException'], ['q=a / 1', '400 HandlerMethodValidationException'],
+    ['q=xx / 2', '200 []'], ['60 x characters', '200 []'], ['61 x characters', '400 HandlerMethodValidationException'],
+    ['q=a&lang=ru', '400, Russian text in detail and errors'],
 ])
 checks = json.loads((docs/'browser-checks.json').read_text())
 code(json.dumps(next(x['body'] for x in checks if x.get('request')=='GET /api/books/search?q=a'), ensure_ascii=False, indent=2), 'json')
-screenshot('13-search-valid', 'Рисунок 12. Корректный запрос q=Java возвращает найденную книгу.')
-screenshot('14-search-validation', 'Рисунок 13. q=a: 400 и HandlerMethodValidationException в обработанном ответе.')
-screenshot('15-search-validation-ru', 'Рисунок 14. Та же ошибка method validation на русском языке.')
+screenshot('13-search-valid', 'Figure 12. A valid q=Java request returns the matching book.')
+screenshot('14-search-validation', 'Figure 13. q=a produces 400 and HandlerMethodValidationException in the handled response.')
+screenshot('15-search-validation-ru', 'Figure 14. The same method validation error is localized into Russian.')
 
-heading('9. Проверка основы лабораторной №5')
-paragraph('REST принимает отдельный BookRequest. Новые поля жанра и доступности являются необязательными для старого JSON запроса; это сохраняет команды из методички №5. Идентификатор присваивает репозиторий, PUT использует id из URL, а повторный DELETE возвращает 404.')
-table(['Операция', 'Проверенный результат'], [
-    ['GET /api/books?author=Bloch&limit=1', '200, JSON содержит Joshua Bloch'],
-    ['GET /api/books/{id}', '200 для существующего; 404 ProblemDetail для отсутствующего'],
-    ['POST /api/books', '201 + Location; созданный ресурс читается по Location'],
-    ['PUT /api/books/{id}', '200 и заменённая запись; 404 для отсутствующего'],
-    ['DELETE /api/books/{id}', '204, пустое тело; повторный DELETE 404'],
+heading('9. Verification of the Laboratory Work No. 5 baseline')
+paragraph('REST accepts a separate BookRequest. Genre and availability are optional in the original JSON request, so the commands from Laboratory Work No. 5 remain compatible. The repository assigns identifiers, PUT uses the id from the URL, and deleting an already deleted resource returns 404.')
+table(['Operation', 'Verified result'], [
+    ['GET /api/books?author=Bloch&limit=1', '200, JSON includes Joshua Bloch'],
+    ['GET /api/books/{id}', '200 for an existing record; 404 ProblemDetail for a missing record'],
+    ['POST /api/books', '201 + Location; the created resource can be read at Location'],
+    ['PUT /api/books/{id}', '200 with the replaced record; 404 for a missing record'],
+    ['DELETE /api/books/{id}', '204 with an empty body; a second DELETE returns 404'],
 ])
-table(['Эксперимент', 'Статус', 'Причина'], [
-    ['GET /api/books/abc', '400', 'abc не преобразуется в long @PathVariable'],
-    ['GET /api/nothing', '404', 'Нет такого маршрута или статического ресурса'],
-    ['DELETE /api/books', '405', 'Метод DELETE не объявлен для пути без id'],
-    ['POST /api/books, Content-Type: text/plain', '415', 'Нет подходящего converter для BookRequest из text/plain'],
-    ['GET /api/books, Accept: application/xml', '406', 'Не удаётся представить ответ поддерживаемым converter в требуемом формате'],
+table(['Experiment', 'Status', 'Explanation'], [
+    ['GET /api/books/abc', '400', 'abc cannot be converted to the long @PathVariable'],
+    ['GET /api/nothing', '404', 'No matching route or static resource exists'],
+    ['DELETE /api/books', '405', 'DELETE is not mapped to the collection path without an id'],
+    ['POST /api/books, Content-Type: text/plain', '415', 'No suitable converter can read BookRequest from text/plain'],
+    ['GET /api/books, Accept: application/xml', '406', 'The available converters cannot write the response in the requested representation'],
 ])
-screenshot('01-catalogue', 'Рисунок 15. Каталог и статический CSS; начальные три книги.')
-screenshot('02-filter', 'Рисунок 16. Фильтр author=Bloch оставляет одну запись.')
+screenshot('01-catalogue', 'Figure 15. The styled catalogue with the three initial books.')
+screenshot('02-filter', 'Figure 16. The author=Bloch filter leaves one matching record.')
 
-heading('10. Автоматические проверки и воспроизведение')
-paragraph('Выполнено bash mvnw -s /workspace/.tools/maven-settings.xml -B verify с Java 25. Команда завершилась BUILD SUCCESS; создан запускаемый JAR. После исправлений повторно выполнен полный набор, затем отдельно проверено повторяемое облачное setup-описание. Сервер запускался из собранного JAR; браузерные проверки выполнены настоящим headless Chromium через Playwright.')
-table(['Набор', 'Выполнено', 'Failures / Errors / Skipped'], [
+heading('10. Automated verification and reproduction')
+paragraph('bash mvnw -s /workspace/.tools/maven-settings.xml -B verify was executed with Java 25. It completed with BUILD SUCCESS and produced an executable JAR. After the fixes, the complete suite was rerun and the reusable cloud setup instructions were exercised separately. The server was started from the built JAR; browser checks used real headless Chromium through Playwright.')
+table(['Suite', 'Executed', 'Failures / Errors / Skipped'], [
     ['BookWorkflowTests', '25', '0 / 0 / 0'], ['NoDigitsValidatorTests', '6', '0 / 0 / 0'],
-    ['SpringLab01ApplicationTests', '1', '0 / 0 / 0'], ['Итого', '32', '0 / 0 / 0'],
+    ['SpringLab01ApplicationTests', '1', '0 / 0 / 0'], ['Total', '32', '0 / 0 / 0'],
 ])
-paragraph('Тесты проверяют не только загрузку контекста: отсутствие записи при ошибках, границы года и поисковой строки, недопустимый enum, нечисловой ввод, русский locale в сессии, однократность flash, сохранение genre/available, запрет подмены id, escaping введённого HTML, REST CRUD и HTTP-ошибки. Браузерные наблюдения сохранены в docs/browser-checks.json; PNG — в docs/screenshots. Проверки демонстрируют техническое выполнение работы; очная демонстрация преподавателю выполняется студентом.')
-code('bash mvnw clean verify\njava -jar target/spring-lab-01-0.0.1-SNAPSHOT.jar\n\n# Для подготовленной облачной среды:\nsource /workspace/.tools/java-env.sh\nbash mvnw -s /workspace/.tools/maven-settings.xml -B verify\n\n# Скриншоты (Chromium и Playwright):\npython scripts/capture-evidence.py', 'bash')
-paragraph('Для демонстрации используется default profile и порт 8080. Существующий dev profile использует 8081. База данных и секреты не требуются; после перезапуска данные в памяти сбрасываются. Реальная отправка почты для этого задания не требуется. Облачный Maven использует поддерживаемый proxy и существующий system trust store без отключения TLS.')
-paragraph('Windows: рабочая папка студента C:\\Labworks\\Spring\\spring-lab-01-main. После получения файлов lab06 и установки JDK 25 выполнить следующие команды PowerShell. Существующую папку и локальные изменения следует сохранить до замены; полный Git-проект можно клонировать в соседнюю новую папку, как описано в README.')
+paragraph('The tests cover rejected submissions without insertion, year and query-length boundaries, invalid enum values, nonnumeric input, Russian locale persistence, one-time flash messages, persistence of genre/available, prevention of client-assigned identifiers, escaping of submitted HTML, REST CRUD and HTTP errors. Browser observations are stored in docs/browser-checks.json, and PNG captures are stored in docs/screenshots. These checks demonstrate the technical implementation; the student must still present and explain the application to the lecturer.')
+code('bash mvnw clean verify\njava -jar target/spring-lab-01-0.0.1-SNAPSHOT.jar\n\n# In the prepared cloud environment:\nsource /workspace/.tools/java-env.sh\nbash mvnw -s /workspace/.tools/maven-settings.xml -B verify\n\n# Browser screenshots (Chromium and Playwright):\npython scripts/capture-evidence.py', 'bash')
+paragraph('The demonstration uses the default profile on port 8080. The existing dev profile uses port 8081. No database or new secrets are required; in-memory data resets when the process restarts. Sending real email is not required for this assignment. Cloud Maven uses the supported proxy and existing system trust store with TLS verification enabled.')
+paragraph('Windows working directory: C:\\Labworks\\Spring\\spring-lab-01-main. After obtaining the lab06 files and installing JDK 25, run the PowerShell commands below. Preserve the existing folder and local changes before replacing files. The complete Git project can also be cloned into a new adjacent directory, as documented in README.')
 code("Set-Location 'C:\\Labworks\\Spring\\spring-lab-01-main'\n.\\mvnw.cmd clean verify\njava -jar .\\target\\spring-lab-01-0.0.1-SNAPSHOT.jar", 'powershell')
 
-heading('11. Вопросы для защиты')
+heading('11. Defence questions and answers')
 answers = [
-    ('Почему форма отдельно от Book?', 'Правила пользовательского ввода и изменяемое состояние формы отделены от доменной записи; id не участвует в связывании и mass assignment.'),
-    ('Что делают th:object и *{title}?', 'th:object выбирает объект модели form; *{title} читает или связывает его свойство title.'),
-    ('Что генерирует th:field?', 'name, id, value, selected/checked и служебный hidden marker для checkbox; при ошибке использует rejected value из BindingResult.'),
-    ('Зачем пустой объект в GET?', 'Он нужен для оценки th:field и для исходных значений до первого POST.'),
-    ('Что если убрать @Valid?', 'Связывание и преобразование типов останутся, но Bean Validation ограничений формы не выполнится.'),
-    ('Что если переместить BindingResult после Model?', 'Spring не свяжет его с валидируемым объектом непосредственно перед ним; ошибочная форма может привести к исключению вместо обычного возврата шаблона.'),
-    ('Почему genres снова в модели?', 'Список вариантов не приходит в POST и не хранится в BookForm; его нужно предоставить при каждом рендеринге формы.'),
-    ('Куда попадают ошибки формы?', 'В BindingResult как FieldError или ObjectError. Контроллер проверяет hasErrors; это отличается от исключения method validation варианта 12.'),
-    ('NotNull, NotEmpty, NotBlank?', 'NotNull запрещает null; NotEmpty также пустую строку/коллекцию; NotBlank проверяет строку после учёта пробелов.'),
-    ('Откуда текст ошибки?', 'Ключ в message="{book.title.required}" разрешается валидатором через MessageSource и активный Locale; th:errors выводит полученный текст.'),
-    ('Field error и global error?', 'Первый относится к конкретному свойству, второй — ко всему объекту, например при class-level constraint. В реализованной форме ограничения дают field errors.'),
-    ('Зачем messages.properties?', 'Это обязательный default bundle для автоконфигурации MessageSource и fallback для отсутствующих переводов.'),
-    ('Как определяется язык?', 'lang читает LocaleChangeInterceptor; SessionLocaleResolver сохраняет выбор в HTTP-сессии; default — English.'),
-    ('Три обязательных члена constraint?', 'message задаёт текст или ключ, groups — группы валидации, payload — дополнительные метаданные нарушения.'),
-    ('Почему null допустим для NoDigits?', 'Ограничение отвечает только за цифры; обязательность значения отдельно проверяет NotBlank.'),
-    ('Как разделены advice?', 'assignableTypes = BookPageController.class и BookRestController.class. Без ограничения общий обработчик мог бы вернуть неправильный формат ответа.'),
-    ('Как выбирается обработчик?', 'Внутри применимого контроллера/advice учитывается наиболее конкретный тип исключения; между advice также важен порядок @Order, а локальные обработчики контроллера проверяются раньше.'),
-    ('Чем опасен th:utext?', 'Он вставляет пользовательский HTML без escaping и может привести к XSS. Здесь используется th:text и безопасное связывание th:field.'),
-    ('Какое исключение у варианта 12?', 'HandlerMethodValidationException от встроенной Spring MVC validation; ApiExceptionHandler превращает его в 400 ProblemDetail с именем q и локализованным сообщением.'),
+    ('Why is the form object separate from Book?', 'Input rules and mutable form state are separate from the domain record. The id is excluded from form binding to prevent mass assignment.'),
+    ('What do th:object and *{title} mean?', 'th:object selects the form object from the model; *{title} refers to the title property of that object.'),
+    ('What does th:field generate?', 'It generates name, id, value, selected/checked states and a hidden marker for checkboxes. On an error, it uses the rejected value from BindingResult.'),
+    ('Why add an empty object in GET?', 'The template needs an object to evaluate th:field and to supply initial values before the first POST.'),
+    ('What happens if @Valid is removed?', 'Binding and type conversion still occur, but the form constraints are not checked by Bean Validation.'),
+    ('What if BindingResult is moved after Model?', 'It is no longer adjacent to the validated object, so Spring cannot associate it correctly. Invalid input may produce an exception instead of the normal error redisplay.'),
+    ('Why add genres to the model again?', 'The available options are not submitted with POST or stored in BookForm; every rendering of the form must receive them.'),
+    ('Where do form errors go?', 'BindingResult collects FieldError and ObjectError entries. The controller checks hasErrors; this differs from the method validation exception in Variant 12.'),
+    ('How do NotNull, NotEmpty and NotBlank differ?', 'NotNull rejects null. NotEmpty also rejects an empty string or collection. NotBlank rejects a string that contains only whitespace.'),
+    ('Where does an error message come from?', 'The key in message="{book.title.required}" is resolved by the validator through MessageSource and the active Locale. th:errors renders the resolved text.'),
+    ('What is a field error versus a global error?', 'A field error belongs to one property; a global error belongs to the whole object, such as a class-level constraint. The constraints used in this form produce field errors.'),
+    ('Why is messages.properties mandatory?', 'It is the default bundle needed for MessageSource auto-configuration and provides fallback text for missing translations.'),
+    ('How is the language selected?', 'LocaleChangeInterceptor reads lang. SessionLocaleResolver stores the selection in the HTTP session. The default is English.'),
+    ('What are the three mandatory constraint members?', 'message defines the text or bundle key; groups defines validation groups; payload provides additional violation metadata.'),
+    ('Why does NoDigits accept null?', 'It checks for digits only. The separate NotBlank constraint enforces a required author.'),
+    ('How are the advice classes scoped?', 'They use assignableTypes = BookPageController.class and BookRestController.class. Without scoping, an applicable handler could return the wrong representation.'),
+    ('Which exception handler is selected?', 'Within an applicable controller or advice, the more specific matching exception type is preferred. Advice ordering also matters, and local controller handlers are checked before advice handlers.'),
+    ('Why is th:utext unsafe for user input?', 'It inserts unescaped HTML and can enable XSS. This implementation uses th:text and the escaped values produced by th:field.'),
+    ('Which exception is used in Variant 12?', 'Spring MVC built-in validation raises HandlerMethodValidationException. ApiExceptionHandler converts it to a 400 ProblemDetail with parameter q and a localized message.'),
 ]
 for question, answer in answers:
     heading(question, 2); paragraph(answer)
 
-heading('12. Выводы')
-paragraph('Декларативная валидация позволяет описать правила возле свойств формы и повторно использовать ограничения без ручных if в контроллере. BindingResult связывает нарушения с конкретными полями, сохраняя введённые пользователем данные. Resource bundles отделяют тексты от кода и позволяют менять язык интерфейса и ошибок одновременно. Controller advice и method validation дают согласованные ответы для HTML-клиента и REST API, а Post/Redirect/Get предотвращает повторное создание записи при обновлении страницы.')
-heading('13. Источники')
+heading('12. Conclusions')
+paragraph('Declarative validation places input rules beside form properties and allows constraints to be reused without manual checks in controller methods. BindingResult associates violations with individual fields while preserving submitted values. Resource bundles separate text from code and switch the interface and validation messages together. Controller advice and method validation provide consistent HTML and REST error responses, while Post/Redirect/Get prevents duplicate creation when a page is refreshed.')
+heading('13. References')
 for text in [
-    'Методичка Laboratory_work_6_EN.docx — основное задание, вариант 12 и требования к отчёту.',
-    'Методичка Laboratory_work_5_EN.docx — восстановление основы REST и MVC каталога.',
+    'Laboratory_work_6_EN.docx — primary assignment, Variant 12 and report requirements.',
+    'Laboratory_work_5_EN.docx — REST and MVC catalogue prerequisites.',
     'Spring Framework: https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html',
     'Spring Boot: https://docs.spring.io/spring-boot/reference/features/internationalization.html',
     'Thymeleaf: https://www.thymeleaf.org/doc/tutorials/3.1/thymeleafspring.html',
 ]: paragraph(text)
 
-heading('Приложение. Хранилище и сервис')
-listing('Листинг 15. BookRepository', 'src/main/java/kz/iitu/springlab/catalog/BookRepository.java')
-listing('Листинг 16. BookService', 'src/main/java/kz/iitu/springlab/catalog/BookService.java')
-listing('Листинг 17. BookRequest — совместимость REST с №5', 'src/main/java/kz/iitu/springlab/web/BookRequest.java')
+heading('Appendix. Repository and service')
+listing('Listing 15. BookRepository', 'src/main/java/kz/iitu/springlab/catalog/BookRepository.java')
+listing('Listing 16. BookService', 'src/main/java/kz/iitu/springlab/catalog/BookService.java')
+listing('Listing 17. BookRequest — REST compatibility with Laboratory Work No. 5', 'src/main/java/kz/iitu/springlab/web/BookRequest.java')
 
 # Render a title page and the same content to DOCX, Markdown and printable HTML.
 doc = Document()
@@ -218,18 +218,18 @@ field=OxmlElement('w:fldSimple');field.set(qn('w:instr'),'PAGE');footer._p.appen
 for text, size in [
     ('JSC «International Information Technology University»',14),
     ('Faculty of Business, Media and Management\nDepartment of Information Systems',11),
-    ('\n\nЛАБОРАТОРНАЯ РАБОТА №6',22),
+    ('\n\nLABORATORY WORK No. 6',22),
     ('Forms and validation',18),
     ('Thymeleaf · Bean Validation · i18n\nController advice · Method validation',12),
-    ('\nКурс: RWPSF 3305\nWeb Application Development with Spring Framework',12),
-    ('\nВыполнил: Kassymzhanov Arzum\nГруппа: IT1-2404IS\nВариант: 12 — Method validation',13),
+    ('\nCourse: RWPSF 3305\nWeb Application Development with Spring Framework',12),
+    ('\nPerformed by: Kassymzhanov Arzum\nGroup: IT1-2404IS\nVariant: 12 — Method validation',13),
     ('\n\nAlmaty, 2026',12),
 ]:
     par=doc.add_paragraph();par.alignment=WD_ALIGN_PARAGRAPH.CENTER
     run=par.add_run(text);run.font.size=Pt(size)
 doc.add_page_break()
-md=['# Лабораторная работа №6 — Kassymzhanov Arzum\n\nIT1-2404IS · Вариант 12\n']
-parts=['<section class="cover"><h2>International Information Technology University</h2><p>Department of Information Systems</p><h1>ЛАБОРАТОРНАЯ РАБОТА №6</h1><h2>Forms and validation</h2><p>RWPSF 3305 — Web Application Development with Spring Framework</p><p>Kassymzhanov Arzum<br>IT1-2404IS<br>Вариант 12 — Method validation</p><p>Almaty, 2026</p></section>']
+md=['# Laboratory Work No. 6 — Kassymzhanov Arzum\n\nIT1-2404IS · Variant 12\n']
+parts=['<section class="cover"><h2>International Information Technology University</h2><p>Department of Information Systems</p><h1>LABORATORY WORK No. 6</h1><h2>Forms and validation</h2><p>RWPSF 3305 — Web Application Development with Spring Framework</p><p>Kassymzhanov Arzum<br>IT1-2404IS<br>Variant 12 — Method validation</p><p>Almaty, 2026</p></section>']
 for kind, value in nodes:
     if kind=='heading':
         level,text=value;doc.add_heading(text,level=level)
@@ -265,7 +265,7 @@ doc.core_properties.title='Laboratory Work 6 — Forms and validation — Varian
 doc.save(docs/'Lab06_Kassymzhanov_Arzum.docx')
 (docs/'report.md').write_text('\n'.join(md))
 style='''@page {size:A4;margin:17mm 18mm;}body{font:11px/1.5 "DejaVu Sans",Arial;color:#16243b;}h1{font-size:25px;}h2{font-size:19px;color:#244b83;break-after:avoid;}h3{font-size:14px;color:#244b83;break-after:avoid;}p{overflow-wrap:anywhere;}pre{font:8px/1.4 "DejaVu Sans Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f5f9;border:1px solid #dce3ee;padding:10px;}table{border-collapse:collapse;width:100%;font-size:10px;margin:12px 0;}th,td{border:1px solid #dce3ee;padding:6px;text-align:left;}th{background:#eef3fa;}tr{break-inside:avoid;}figure{margin:18px 0;break-inside:avoid;text-align:center;}img{max-width:100%;max-height:205mm;object-fit:contain;}figcaption{font-size:10px;font-style:italic;margin-top:6px;}.cover{height:255mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;break-after:page;}.cover h1{margin-top:35px;}'''
-(docs/'report.html').write_text('<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Lab06 — Kassymzhanov Arzum</title><style>'+style+'</style></head><body>'+''.join(parts)+'</body></html>')
+(docs/'report.html').write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Lab06 — Kassymzhanov Arzum</title><style>'+style+'</style></head><body>'+''.join(parts)+'</body></html>')
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args): pass
 server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=str(docs)))
