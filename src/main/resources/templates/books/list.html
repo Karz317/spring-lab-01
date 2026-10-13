@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{book.catalogue}">Book catalogue</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<main class="container">
+    <header>
+        <span class="brand" th:text="#{book.catalogue}">Book catalogue</span>
+        <nav th:aria-label="#{form.language}">
+            <a th:href="@{/books(lang='en',author=${author})}">English</a>
+            <a th:href="@{/books(lang='ru',author=${author})}">Русский</a>
+        </nav>
+    </header>
+    <div class="heading-row">
+        <div><h1 th:text="#{book.catalogue}">Book catalogue</h1><p class="intro" th:text="#{catalogue.intro}"></p></div>
+        <a class="button" th:href="@{/books/new}" th:text="#{book.new}">New book</a>
+    </div>
+    <p class="flash" role="status" th:if="${message}" th:text="${message}"></p>
+    <form class="filter panel" th:action="@{/books}" method="get">
+        <label for="filter-author" th:text="#{book.author}">Author</label>
+        <input id="filter-author" name="author" th:value="${author}">
+        <button th:text="#{catalogue.filter}">Filter</button>
+        <a th:href="@{/books}" th:text="#{catalogue.reset}">Reset</a>
+    </form>
+    <div class="panel table-panel">
+        <table>
+            <thead><tr><th th:text="#{book.id}">ID</th><th th:text="#{book.title}">Title</th><th th:text="#{book.author}">Author</th><th th:text="#{book.year}">Year</th><th th:text="#{book.genre}">Genre</th><th th:text="#{book.available}">Available</th></tr></thead>
+            <tbody>
+            <tr th:each="book : ${books}">
+                <td th:text="${book.id}"></td>
+                <td><a th:href="@{/books/{id}(id=${book.id})}" th:text="${book.title}"></a></td>
+                <td th:text="${book.author}"></td><td th:text="${book.year}"></td>
+                <td th:text="${book.genre == null ? #messages.msg('genre.UNKNOWN') : #messages.msg('genre.' + book.genre)}"></td>
+                <td th:text="${book.available ? #messages.msg('common.yes') : #messages.msg('common.no')}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="empty" th:if="${#lists.isEmpty(books)}" th:text="#{catalogue.empty}"></p>
+    </div>
+</main>
+</body>
+</html>

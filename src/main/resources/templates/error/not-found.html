@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="#{error.notfound}"></title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
+<body><main class="container narrow"><section class="panel not-found">
+    <p class="error-code">404</p><h1 th:text="#{error.notfound}"></h1>
+    <p th:text="${message}"></p><a class="button" th:href="@{/books}" th:text="#{form.back}"></a>
+</section></main></body></html>

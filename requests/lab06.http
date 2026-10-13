@@ -1,0 +1,77 @@
+@base = http://localhost:8080
+
+### Styled catalogue (200)
+GET {{base}}/books
+
+### English form (200)
+GET {{base}}/books/new?lang=en
+
+### Russian form (200), language is stored in the session
+GET {{base}}/books/new?lang=ru
+
+### Invalid form: three field errors, no book created (200 HTML)
+POST {{base}}/books?lang=en
+Content-Type: application/x-www-form-urlencoded
+
+title=&author=Joshua+Bloch&year=1200&genre=&available=true
+
+### Custom constraint (200 HTML with errors)
+POST {{base}}/books?lang=ru
+Content-Type: application/x-www-form-urlencoded
+
+title=Effective+Java&author=Bloch+2018&year=2018&genre=TECHNOLOGY
+
+### Valid form (302; following GET is 200 and flash appears once)
+POST {{base}}/books?lang=en
+Content-Type: application/x-www-form-urlencoded
+
+title=Spring+MVC+in+Practice&author=Arzum+Kassymzhanov&year=2026&genre=TECHNOLOGY&available=true
+
+### Missing book on page: 404 text/html
+GET {{base}}/books/999?lang=en
+
+### Missing book in API: 404 application/problem+json
+GET {{base}}/api/books/999?lang=en
+
+### Variant 12: matching query (200 JSON)
+GET {{base}}/api/books/search?q=Java
+
+### Variant 12: query too short (400 ProblemDetail)
+GET {{base}}/api/books/search?q=a&lang=en
+
+### Variant 12: missing query (400 ProblemDetail)
+GET {{base}}/api/books/search
+
+### Variant 12: 61 characters (400 ProblemDetail)
+GET {{base}}/api/books/search?q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+### Variant 12: Russian method validation message
+GET {{base}}/api/books/search?q=a&lang=ru
+
+### Original lab 5 filter (200)
+GET {{base}}/api/books?author=Bloch&limit=1
+
+### Original lab 5 create (201 + Location)
+POST {{base}}/api/books
+Content-Type: application/json
+
+{"title":"Pro Spring 6","author":"Cosmina","year":2023}
+
+### Original lab 5 error statuses
+GET {{base}}/api/books/abc
+
+### 404
+GET {{base}}/api/nothing
+
+### 405
+DELETE {{base}}/api/books
+
+### 415
+POST {{base}}/api/books
+Content-Type: text/plain
+
+hello
+
+### 406
+GET {{base}}/api/books
+Accept: application/xml

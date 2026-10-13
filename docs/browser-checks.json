@@ -1,0 +1,168 @@
+[
+  {
+    "check": "03-empty-title",
+    "result": "passed",
+    "error": "The title must not be empty"
+  },
+  {
+    "check": "04-year-range",
+    "result": "passed",
+    "error": "The year must be between 1450 and 2100"
+  },
+  {
+    "check": "05-no-genre",
+    "result": "passed",
+    "error": "Choose a genre"
+  },
+  {
+    "check": "06-author-digits",
+    "result": "passed",
+    "error": "The author must not contain digits"
+  },
+  {
+    "check": "07-russian-validation",
+    "result": "passed",
+    "error": "Название не может быть пустым"
+  },
+  {
+    "check": "08-combined-errors",
+    "result": "passed",
+    "error": "The title must not be empty"
+  },
+  {
+    "check": "PRG and refresh",
+    "result": "passed",
+    "before": 3,
+    "after": 4
+  },
+  {
+    "request": "GET /books/999",
+    "status": 404,
+    "contentType": "text/html;charset=UTF-8",
+    "handler": "PageExceptionHandler"
+  },
+  {
+    "request": "GET /api/books/999?lang=en",
+    "status": 404,
+    "contentType": "application/problem+json",
+    "body": {
+      "detail": "Book with id 999 was not found",
+      "instance": "/api/books/999",
+      "status": 404,
+      "title": "Book not found"
+    }
+  },
+  {
+    "request": "GET /api/books/search?q=Java",
+    "status": 200,
+    "contentType": "application/json",
+    "body": [
+      {
+        "id": 1,
+        "title": "Effective Java",
+        "author": "Joshua Bloch",
+        "year": 2018,
+        "genre": "TECHNOLOGY",
+        "available": true
+      }
+    ]
+  },
+  {
+    "request": "GET /api/books/search?q=a",
+    "status": 400,
+    "contentType": "application/problem+json",
+    "body": {
+      "detail": "The search query must contain between 2 and 60 characters",
+      "instance": "/api/books/search",
+      "status": 400,
+      "title": "Validation failed",
+      "exception": "HandlerMethodValidationException",
+      "errors": [
+        {
+          "parameter": "q",
+          "message": "The search query must contain between 2 and 60 characters"
+        }
+      ]
+    }
+  },
+  {
+    "request": "GET /api/books/search?q=a&lang=ru",
+    "status": 400,
+    "contentType": "application/problem+json",
+    "body": {
+      "detail": "Поисковый запрос должен содержать от 2 до 60 символов",
+      "instance": "/api/books/search",
+      "status": 400,
+      "title": "Ошибка валидации",
+      "exception": "HandlerMethodValidationException",
+      "errors": [
+        {
+          "parameter": "q",
+          "message": "Поисковый запрос должен содержать от 2 до 60 символов"
+        }
+      ]
+    }
+  },
+  {
+    "check": "search length 1",
+    "status": 400,
+    "result": "passed"
+  },
+  {
+    "check": "search length 2",
+    "status": 200,
+    "result": "passed"
+  },
+  {
+    "check": "search length 60",
+    "status": 200,
+    "result": "passed"
+  },
+  {
+    "check": "search length 61",
+    "status": 400,
+    "result": "passed"
+  },
+  {
+    "request": "GET /api/books/abc",
+    "status": 400,
+    "result": "passed"
+  },
+  {
+    "request": "GET /api/nothing",
+    "status": 404,
+    "result": "passed"
+  },
+  {
+    "request": "DELETE /api/books",
+    "status": 405,
+    "result": "passed"
+  },
+  {
+    "request": "POST /api/books",
+    "status": 415,
+    "result": "passed"
+  },
+  {
+    "request": "GET /api/books",
+    "status": 406,
+    "result": "passed"
+  },
+  {
+    "request": "POST /api/books",
+    "status": 201,
+    "location": "/api/books/5",
+    "body": {
+      "id": 5,
+      "title": "API smoke book",
+      "author": "Test Author",
+      "year": 2026,
+      "genre": "TECHNOLOGY",
+      "available": true
+    }
+  },
+  {
+    "check": "REST create/read/replace/delete/delete-again",
+    "result": "passed"
+  }
+]
