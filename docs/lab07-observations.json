@@ -1,0 +1,237 @@
+{
+  "capturedAt": "2026-10-19T21:12:02+0500",
+  "baseUrl": "http://localhost:8080",
+  "observations": [
+    {
+      "request": "GET /api/books",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "body": [
+        {
+          "id": 1,
+          "title": "Effective Java",
+          "author": "Joshua Bloch",
+          "year": 2018,
+          "genre": "TECHNOLOGY",
+          "createdAt": "2026-10-19T16:11:51.133173100Z"
+        },
+        {
+          "id": 2,
+          "title": "Clean Code",
+          "author": "Robert Martin",
+          "year": 2008,
+          "genre": "TECHNOLOGY",
+          "createdAt": "2026-10-19T16:11:51.133173100Z"
+        },
+        {
+          "id": 3,
+          "title": "Spring in Action",
+          "author": "Craig Walls",
+          "year": 2022,
+          "genre": "TECHNOLOGY",
+          "createdAt": "2026-10-19T16:11:51.133173100Z"
+        }
+      ]
+    },
+    {
+      "request": "GET /api/books/1",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "body": {
+        "id": 1,
+        "title": "Effective Java",
+        "author": "Joshua Bloch",
+        "year": 2018,
+        "genre": "TECHNOLOGY",
+        "createdAt": "2026-10-19T16:11:51.133173100Z"
+      }
+    },
+    {
+      "request": "GET /api/books/999",
+      "status": 404,
+      "contentType": "application/problem+json",
+      "location": null,
+      "body": {
+        "detail": "Book with id 999 was not found",
+        "instance": "/api/books/999",
+        "status": 404,
+        "title": "Book not found",
+        "type": "https://api.iitu.kz/errors/book-not-found"
+      }
+    },
+    {
+      "request": "POST /api/books",
+      "status": 201,
+      "contentType": "application/json",
+      "location": "/api/books/4",
+      "body": {
+        "id": 4,
+        "title": "HTTP Evidence 1792426322402078400",
+        "author": "Evidence Author",
+        "year": 2026,
+        "genre": "SCIENCE",
+        "createdAt": "2026-10-19T16:12:02.468077400Z"
+      }
+    },
+    {
+      "request": "GET /api/books/4",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "body": {
+        "id": 4,
+        "title": "HTTP Evidence 1792426322402078400",
+        "author": "Evidence Author",
+        "year": 2026,
+        "genre": "SCIENCE",
+        "createdAt": "2026-10-19T16:12:02.468077400Z"
+      }
+    },
+    {
+      "request": "DELETE /api/books/4",
+      "status": 204,
+      "contentType": "",
+      "location": null,
+      "body": ""
+    },
+    {
+      "request": "DELETE /api/books/4",
+      "status": 404,
+      "contentType": "application/problem+json",
+      "location": null,
+      "body": {
+        "detail": "Book with id 4 was not found",
+        "instance": "/api/books/4",
+        "status": 404,
+        "title": "Book not found",
+        "type": "https://api.iitu.kz/errors/book-not-found"
+      }
+    },
+    {
+      "request": "POST /api/books",
+      "status": 400,
+      "contentType": "application/problem+json",
+      "location": null,
+      "body": {
+        "detail": "One or more request fields are invalid",
+        "instance": "/api/books",
+        "status": 400,
+        "title": "Validation failed",
+        "errors": [
+          {
+            "field": "title",
+            "message": "The title must not be empty"
+          }
+        ]
+      }
+    },
+    {
+      "request": "POST /api/books",
+      "status": 409,
+      "contentType": "application/problem+json",
+      "location": null,
+      "body": {
+        "detail": "A book with title 'Effective Java' and the same author already exists",
+        "instance": "/api/books",
+        "status": 409,
+        "title": "Duplicate title",
+        "type": "https://api.iitu.kz/errors/duplicate-title",
+        "conflictingTitle": "Effective Java"
+      }
+    },
+    {
+      "request": "GET /api/books/search?q=Java",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "body": [
+        {
+          "id": 1,
+          "title": "Effective Java",
+          "author": "Joshua Bloch",
+          "year": 2018,
+          "genre": "TECHNOLOGY",
+          "createdAt": "2026-10-19T16:11:51.133173100Z"
+        }
+      ]
+    },
+    {
+      "request": "GET /api/books/search?q=a",
+      "status": 400,
+      "contentType": "application/problem+json",
+      "location": null,
+      "body": {
+        "detail": "The search query must contain between 2 and 60 characters",
+        "instance": "/api/books/search",
+        "status": 400,
+        "title": "Validation failed",
+        "exception": "HandlerMethodValidationException",
+        "errors": [
+          {
+            "parameter": "q",
+            "message": "The search query must contain between 2 and 60 characters"
+          }
+        ]
+      }
+    }
+  ],
+  "openapi": {
+    "version": "3.1.0",
+    "bookPaths": [
+      "/api/books",
+      "/api/books/search",
+      "/api/books/{id}"
+    ],
+    "bookMethods": {
+      "/api/books/{id}": [
+        "delete",
+        "get",
+        "put"
+      ],
+      "/api/books": [
+        "get",
+        "post"
+      ],
+      "/api/books/search": [
+        "get"
+      ]
+    },
+    "bookRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 120,
+          "minLength": 0
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "format": "int32",
+          "maximum": 2100,
+          "minimum": 1450
+        },
+        "genre": {
+          "type": "string",
+          "enum": [
+            "FICTION",
+            "NON_FICTION",
+            "SCIENCE",
+            "TECHNOLOGY",
+            "HISTORY"
+          ]
+        }
+      },
+      "required": [
+        "author",
+        "genre",
+        "title"
+      ]
+    }
+  }
+}

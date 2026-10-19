@@ -1,0 +1,66 @@
+@base = http://localhost:8080
+
+### Collection: 200
+GET {{base}}/api/books
+
+### Existing item: 200
+GET {{base}}/api/books/1
+
+### Missing item: 404 application/problem+json
+GET {{base}}/api/books/999
+
+### Create: 201 + Location
+POST {{base}}/api/books
+Content-Type: application/json
+
+{
+  "title": "REST API Design",
+  "author": "Demo Author",
+  "year": 2026,
+  "genre": "TECHNOLOGY"
+}
+
+### Replace: 200
+PUT {{base}}/api/books/4
+Content-Type: application/json
+
+{
+  "title": "REST API Design Second Edition",
+  "author": "Demo Author",
+  "year": 2026,
+  "genre": "TECHNOLOGY"
+}
+
+### Delete: 204, and 404 on the second request
+DELETE {{base}}/api/books/4
+
+### Invalid request: 400 application/problem+json
+POST {{base}}/api/books
+Content-Type: application/json
+
+{
+  "title": "",
+  "author": "Demo Author",
+  "year": 2026,
+  "genre": "TECHNOLOGY"
+}
+
+### Duplicate title and author: 409 application/problem+json
+POST {{base}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Effective Java",
+  "author": "Joshua Bloch",
+  "year": 2018,
+  "genre": "TECHNOLOGY"
+}
+
+### Variant 12: valid search
+GET {{base}}/api/books/search?q=Java
+
+### Variant 12: invalid search
+GET {{base}}/api/books/search?q=a
+
+### OpenAPI document
+GET {{base}}/v3/api-docs

@@ -42,6 +42,7 @@ public class BookRepository {
     }
 
     private Book withId(long id, Book book) {
-        return new Book(id, book.title(), book.author(), book.year(), book.genre(), book.available());
+        return new Book(id, book.title(), book.author(), book.year(), book.genre(),
+                book.available(), book.createdAt());
     }
 }

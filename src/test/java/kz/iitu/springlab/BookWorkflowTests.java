@@ -144,18 +144,21 @@ class BookWorkflowTests {
                 .andExpect(content().string(containsString("Effective Java")))
                 .andExpect(content().string(not(containsString("Clean Code"))));
         String result = mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":999,\"title\":\"REST book\",\"author\":\"Author\",\"year\":2020}"))
+                        .content("{\"id\":999,\"title\":\"REST book\",\"author\":\"Author\","
+                                + "\"year\":2020,\"genre\":\"TECHNOLOGY\"}"))
                 .andExpect(status().isCreated()).andExpect(header().exists("Location"))
                 .andReturn().getResponse().getHeader("Location");
         assertThat(result).isNotEqualTo("/api/books/999");
         mvc.perform(get(result)).andExpect(status().isOk()).andExpect(jsonPath("$.title").value("REST book"));
         mvc.perform(put(result).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"Replaced\",\"author\":\"Author\",\"year\":2021}"))
+                        .content("{\"title\":\"Replaced\",\"author\":\"Author\","
+                                + "\"year\":2021,\"genre\":\"SCIENCE\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Replaced"));
         mvc.perform(delete(result)).andExpect(status().isNoContent()).andExpect(content().string(""));
         mvc.perform(delete(result)).andExpect(status().isNotFound());
         mvc.perform(put("/api/books/999").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"Missing\",\"author\":\"Author\",\"year\":2021}"))
+                .content("{\"title\":\"Missing\",\"author\":\"Author\","
+                        + "\"year\":2021,\"genre\":\"SCIENCE\"}"))
                 .andExpect(status().isNotFound());
         mvc.perform(get("/css/app.css")).andExpect(status().isOk())
                 .andExpect(content().string(containsString(".is-invalid")));
@@ -173,7 +176,23 @@ class BookWorkflowTests {
                 .andExpect(status().isUnsupportedMediaType());
         mvc.perform(get("/api/books").accept(MediaType.APPLICATION_XML))
                 .andExpect(status().isNotAcceptable());
-        mvc.perform(get("/api/books").param("limit", "-1")).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"\",\"author\":\"Author\","
+                                + "\"year\":2020,\"genre\":\"SCIENCE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errors[0].field").value("title"));
+    }
+
+    @Test
+    void duplicateBookReturns409ProblemDetail() throws Exception {
+        mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Effective Java\",\"author\":\"Joshua Bloch\","
+                                + "\"year\":2018,\"genre\":\"TECHNOLOGY\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Duplicate title"))
+                .andExpect(jsonPath("$.conflictingTitle").value("Effective Java"));
     }
 
     @Test
