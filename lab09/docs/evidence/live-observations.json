@@ -1,0 +1,204 @@
+{
+  "transfer": {
+    "before": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 1000.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 500.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      }
+    ],
+    "amount": "100.00",
+    "after": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 900.0,
+        "VERSION": 1,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 600.0,
+        "VERSION": 1,
+        "STATUS": "ACTIVE"
+      }
+    ]
+  },
+  "insufficientFunds": {
+    "exception": "Insufficient funds",
+    "after": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 1000.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 500.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      }
+    ]
+  },
+  "rollback": {
+    "sqlFlushedBeforeFailure": true,
+    "after": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 1000.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 500.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      }
+    ],
+    "exception": "Simulated unchecked failure after debit"
+  },
+  "checkedDefault": [
+    {
+      "ID": 1,
+      "OWNER_NAME": "Alice",
+      "BALANCE": 900.0,
+      "VERSION": 1,
+      "STATUS": "ACTIVE"
+    },
+    {
+      "ID": 2,
+      "OWNER_NAME": "Bob",
+      "BALANCE": 500.0,
+      "VERSION": 0,
+      "STATUS": "ACTIVE"
+    }
+  ],
+  "checkedRollbackFor": [
+    {
+      "ID": 1,
+      "OWNER_NAME": "Alice",
+      "BALANCE": 1000.0,
+      "VERSION": 0,
+      "STATUS": "ACTIVE"
+    },
+    {
+      "ID": 2,
+      "OWNER_NAME": "Bob",
+      "BALANCE": 500.0,
+      "VERSION": 0,
+      "STATUS": "ACTIVE"
+    }
+  ],
+  "required": {
+    "accounts": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 1000.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 500.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      }
+    ],
+    "auditCount": 0
+  },
+  "requiresNew": {
+    "accounts": [
+      {
+        "ID": 1,
+        "OWNER_NAME": "Alice",
+        "BALANCE": 1000.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      },
+      {
+        "ID": 2,
+        "OWNER_NAME": "Bob",
+        "BALANCE": 500.0,
+        "VERSION": 0,
+        "STATUS": "ACTIVE"
+      }
+    ],
+    "auditCount": 1
+  },
+  "readCommitted": {
+    "writerCommitted": 1050.0,
+    "database": "2.3.232 (2024-08-11)",
+    "secondRead": 1050.0,
+    "isolation": "READ_COMMITTED",
+    "firstRead": 1000.0
+  },
+  "repeatableRead": {
+    "writerCommitted": 1050.0,
+    "database": "2.3.232 (2024-08-11)",
+    "secondRead": 1000.0,
+    "isolation": "REPEATABLE_READ",
+    "firstRead": 1000.0
+  },
+  "optimisticLock": {
+    "staleUpdateRejected": true,
+    "loadedVersion": 0,
+    "finalBalance": 1010.0,
+    "conflict": "RollbackException",
+    "committedVersion": 1
+  },
+  "migrations": {
+    "upgradeApplied": 2,
+    "emptyDatabaseApplied": 2,
+    "history": [
+      {
+        "checksum": -214723002,
+        "script": "V1__create_accounts.sql",
+        "state": "SUCCESS",
+        "version": "1"
+      },
+      {
+        "checksum": -610836787,
+        "script": "V2__add_status.sql",
+        "state": "SUCCESS",
+        "version": "2"
+      },
+      {
+        "checksum": 34784705,
+        "script": "V3__index_owner_name.sql",
+        "state": "SUCCESS",
+        "version": "3"
+      },
+      {
+        "checksum": 296225922,
+        "script": "V4__create_audit_records.sql",
+        "state": "SUCCESS",
+        "version": "4"
+      }
+    ],
+    "indexPresent": true,
+    "restartApplied": 0
+  },
+  "runtime": {
+    "springBoot": "3.5.16",
+    "java": "25.0.2",
+    "database": "2.3.232"
+  }
+}

@@ -1,4 +1,24 @@
-# Spring Laboratory 07 - REST API Design
+# Spring Laboratory Works
+
+## Laboratory 09 — Transactions and schema versioning
+
+The `lab09` branch adds a standalone **Spring Boot 3** module at
+[`lab09/`](lab09/README.md): account transfers, rollback and propagation,
+H2 isolation experiments, optimistic locking and Flyway migrations.
+All **18 integration tests pass**. The module includes a seven-page
+[report](lab09/docs/Lab09_Kassymzhanov_Arzum.docx), a
+[PDF copy](lab09/docs/Lab09_Kassymzhanov_Arzum.pdf), measured API responses
+and actual application restart logs.
+
+```powershell
+Set-Location .\lab09
+.\mvnw.cmd clean verify
+java -jar .\target\transaction-lab09-1.0.0.jar
+```
+
+The local demonstration runs at <http://127.0.0.1:8089>.
+
+## Laboratory 07 - REST API Design
 
 **Kassymzhanov Arzum - IT1-2404IS - Variant 12 (RestTestClient).**
 

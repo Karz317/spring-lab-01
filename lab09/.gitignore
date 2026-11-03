@@ -1,0 +1,4 @@
+target/
+data/
+*.log
+!docs/evidence/*.log

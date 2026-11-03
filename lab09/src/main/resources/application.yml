@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: transaction-lab09
+  datasource:
+    url: ${LAB09_DB_URL:jdbc:h2:mem:txlab;DB_CLOSE_DELAY=-1}
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+server:
+  address: 127.0.0.1
+  port: 8089

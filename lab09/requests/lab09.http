@@ -1,0 +1,23 @@
+### Initial sample accounts
+GET http://127.0.0.1:8089/api/lab09/accounts
+
+### Successful transfer: Alice 900.00, Bob 600.00 on a fresh database
+POST http://127.0.0.1:8089/api/lab09/transfers
+Content-Type: application/json
+
+{"fromId":1,"toId":2,"amount":100.00}
+
+### Insufficient funds: 409, balances unchanged
+POST http://127.0.0.1:8089/api/lab09/transfers
+Content-Type: application/json
+
+{"fromId":1,"toId":2,"amount":100000.00}
+
+### Invalid amount: 400
+POST http://127.0.0.1:8089/api/lab09/transfers
+Content-Type: application/json
+
+{"fromId":1,"toId":2,"amount":-1.00}
+
+### All measured experiments (resets the two sample accounts)
+POST http://127.0.0.1:8089/api/lab09/experiments

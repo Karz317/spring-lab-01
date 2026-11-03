@@ -1,0 +1,175 @@
+{
+  "transfer" : {
+    "before" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 1000.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 500.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    } ],
+    "after" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 900.00,
+      "VERSION" : 1,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 600.00,
+      "VERSION" : 1,
+      "STATUS" : "ACTIVE"
+    } ],
+    "amount" : "100.00"
+  },
+  "insufficientFunds" : {
+    "after" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 1000.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 500.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    } ],
+    "exception" : "Insufficient funds"
+  },
+  "rollback" : {
+    "exception" : "Simulated unchecked failure after debit",
+    "after" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 1000.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 500.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    } ],
+    "sqlFlushedBeforeFailure" : true
+  },
+  "checkedDefault" : [ {
+    "ID" : 1,
+    "OWNER_NAME" : "Alice",
+    "BALANCE" : 900.00,
+    "VERSION" : 1,
+    "STATUS" : "ACTIVE"
+  }, {
+    "ID" : 2,
+    "OWNER_NAME" : "Bob",
+    "BALANCE" : 500.00,
+    "VERSION" : 0,
+    "STATUS" : "ACTIVE"
+  } ],
+  "checkedRollbackFor" : [ {
+    "ID" : 1,
+    "OWNER_NAME" : "Alice",
+    "BALANCE" : 1000.00,
+    "VERSION" : 0,
+    "STATUS" : "ACTIVE"
+  }, {
+    "ID" : 2,
+    "OWNER_NAME" : "Bob",
+    "BALANCE" : 500.00,
+    "VERSION" : 0,
+    "STATUS" : "ACTIVE"
+  } ],
+  "required" : {
+    "auditCount" : 0,
+    "accounts" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 1000.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 500.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    } ]
+  },
+  "requiresNew" : {
+    "auditCount" : 1,
+    "accounts" : [ {
+      "ID" : 1,
+      "OWNER_NAME" : "Alice",
+      "BALANCE" : 1000.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    }, {
+      "ID" : 2,
+      "OWNER_NAME" : "Bob",
+      "BALANCE" : 500.00,
+      "VERSION" : 0,
+      "STATUS" : "ACTIVE"
+    } ]
+  },
+  "readCommitted" : {
+    "writerCommitted" : 1050.00,
+    "firstRead" : 1000.00,
+    "isolation" : "READ_COMMITTED",
+    "secondRead" : 1050.00,
+    "database" : "2.3.232 (2024-08-11)"
+  },
+  "repeatableRead" : {
+    "writerCommitted" : 1050.00,
+    "firstRead" : 1000.00,
+    "isolation" : "REPEATABLE_READ",
+    "secondRead" : 1000.00,
+    "database" : "2.3.232 (2024-08-11)"
+  },
+  "optimisticLock" : {
+    "staleUpdateRejected" : true,
+    "committedVersion" : 1,
+    "conflict" : "RollbackException",
+    "finalBalance" : 1010.00,
+    "loadedVersion" : 0
+  },
+  "migrations" : {
+    "restartApplied" : 0,
+    "indexPresent" : true,
+    "history" : [ {
+      "version" : "1",
+      "state" : "SUCCESS",
+      "script" : "V1__create_accounts.sql",
+      "checksum" : -214723002
+    }, {
+      "version" : "2",
+      "state" : "SUCCESS",
+      "script" : "V2__add_status.sql",
+      "checksum" : -610836787
+    }, {
+      "version" : "3",
+      "state" : "SUCCESS",
+      "script" : "V3__index_owner_name.sql",
+      "checksum" : 34784705
+    }, {
+      "version" : "4",
+      "state" : "SUCCESS",
+      "script" : "V4__create_audit_records.sql",
+      "checksum" : 296225922
+    } ],
+    "emptyDatabaseApplied" : 2,
+    "upgradeApplied" : 2
+  },
+  "runtime" : {
+    "springBoot" : "3.5.16",
+    "database" : "2.3.232",
+    "java" : "25.0.2"
+  }
+}

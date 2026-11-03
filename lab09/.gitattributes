@@ -1,0 +1,2 @@
+# Preserve original captured output, including Maven's space after [INFO].
+docs/evidence/*.log -whitespace

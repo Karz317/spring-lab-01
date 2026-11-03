@@ -1,0 +1,20 @@
+[
+  {
+    "stage": "first-v2",
+    "target": "2",
+    "expectedApplied": 2,
+    "log": "C:\\Users\\Арзум\\Documents\\Codex\\2026-11-03\\plugin-computer-use-openai-bundled-c\\work\\lab09\\target\\migration-restart-20261103-105030\\first-v2.log"
+  },
+  {
+    "stage": "restart-v2",
+    "target": "2",
+    "expectedApplied": 0,
+    "log": "C:\\Users\\Арзум\\Documents\\Codex\\2026-11-03\\plugin-computer-use-openai-bundled-c\\work\\lab09\\target\\migration-restart-20261103-105030\\restart-v2.log"
+  },
+  {
+    "stage": "upgrade-v4",
+    "target": "4",
+    "expectedApplied": 2,
+    "log": "C:\\Users\\Арзум\\Documents\\Codex\\2026-11-03\\plugin-computer-use-openai-bundled-c\\work\\lab09\\target\\migration-restart-20261103-105030\\upgrade-v4.log"
+  }
+]
