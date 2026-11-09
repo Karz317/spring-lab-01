@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administration</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body><main class="container">
+    <header>
+        <a class="brand" th:href="@{/books}">Book catalogue</a>
+        <div th:replace="~{fragments/session :: account}"></div>
+    </header>
+    <h1>Administration</h1>
+    <p class="intro">User accounts and their catalogue permissions.</p>
+    <div class="panel table-panel">
+        <table>
+            <thead><tr><th>Username</th><th>Roles</th><th>Enabled</th></tr></thead>
+            <tbody>
+            <tr th:each="user : ${users}">
+                <td th:text="${user.username}"></td>
+                <td th:text="${#strings.listJoin(user.roles, ', ')}"></td>
+                <td th:text="${user.enabled ? 'Yes' : 'No'}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main></body>
+</html>

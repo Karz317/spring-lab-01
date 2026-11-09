@@ -12,16 +12,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
+@WithMockUser(roles = "ADMIN")
 class BookWorkflowTests {
     @Autowired MockMvc mvc;
     @Autowired BookRepository repository;
@@ -49,7 +54,7 @@ class BookWorkflowTests {
             case "DIGITS" -> "Bloch 2018";
             default -> value;
         });
-        var request = post("/books");
+        var request = post("/books").with(csrf());
         params.forEach(request::param);
         mvc.perform(request).andExpect(status().isOk()).andExpect(view().name("books/form"))
                 .andExpect(model().attributeHasFieldErrors("form", field))
@@ -64,7 +69,7 @@ class BookWorkflowTests {
     void validFormPersistsAllFieldsAndFlashIsConsumed(int year, boolean available) throws Exception {
         int before = repository.findAll().size();
         MockHttpSession session = new MockHttpSession();
-        var response = mvc.perform(post("/books").session(session)
+        var response = mvc.perform(post("/books").with(csrf()).session(session)
                         .param("title", "Boundary book " + year).param("author", "Author")
                         .param("year", String.valueOf(year)).param("genre", "HISTORY")
                         .param("available", String.valueOf(available)).param("id", "999"))
@@ -87,13 +92,13 @@ class BookWorkflowTests {
         mvc.perform(get("/books/new").param("lang", "ru").session(session))
                 .andExpect(content().string(containsString("Новая книга")))
                 .andExpect(content().string(containsString("Технологии")));
-        mvc.perform(post("/books").session(session).param("title", "").param("author", "Bloch 2018")
+        mvc.perform(post("/books").with(csrf()).session(session).param("title", "").param("author", "Bloch 2018")
                         .param("year", "abc").param("genre", ""))
                 .andExpect(content().string(containsString("Название не может быть пустым")))
                 .andExpect(content().string(containsString("Имя автора не должно содержать цифры")))
                 .andExpect(content().string(containsString("Введите целое число")))
                 .andExpect(content().string(containsString("Выберите жанр")));
-        mvc.perform(post("/books").session(session).param("title", "Русская книга").param("author", "Автор")
+        mvc.perform(post("/books").with(csrf()).session(session).param("title", "Русская книга").param("author", "Автор")
                         .param("year", "2020").param("genre", "FICTION"))
                 .andExpect(flash().attribute("message", "Книга «Русская книга» добавлена"));
         mvc.perform(get("/books/new").param("lang", "en").session(session))
@@ -143,20 +148,20 @@ class BookWorkflowTests {
         mvc.perform(get("/books").param("author", "Bloch"))
                 .andExpect(content().string(containsString("Effective Java")))
                 .andExpect(content().string(not(containsString("Clean Code"))));
-        String result = mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
+        String result = mvc.perform(post("/api/books").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\":999,\"title\":\"REST book\",\"author\":\"Author\","
                                 + "\"year\":2020,\"genre\":\"TECHNOLOGY\"}"))
                 .andExpect(status().isCreated()).andExpect(header().exists("Location"))
                 .andReturn().getResponse().getHeader("Location");
         assertThat(result).isNotEqualTo("/api/books/999");
         mvc.perform(get(result)).andExpect(status().isOk()).andExpect(jsonPath("$.title").value("REST book"));
-        mvc.perform(put(result).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(put(result).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Replaced\",\"author\":\"Author\","
                                 + "\"year\":2021,\"genre\":\"SCIENCE\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Replaced"));
-        mvc.perform(delete(result)).andExpect(status().isNoContent()).andExpect(content().string(""));
-        mvc.perform(delete(result)).andExpect(status().isNotFound());
-        mvc.perform(put("/api/books/999").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(delete(result).with(csrf())).andExpect(status().isNoContent()).andExpect(content().string(""));
+        mvc.perform(delete(result).with(csrf())).andExpect(status().isNotFound());
+        mvc.perform(put("/api/books/999").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"Missing\",\"author\":\"Author\","
                         + "\"year\":2021,\"genre\":\"SCIENCE\"}"))
                 .andExpect(status().isNotFound());
@@ -170,13 +175,13 @@ class BookWorkflowTests {
     @Test
     void previousLabErrorStatusesArePreserved() throws Exception {
         mvc.perform(get("/api/books/abc")).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/nothing")).andExpect(status().isNotFound());
-        mvc.perform(delete("/api/books")).andExpect(status().isMethodNotAllowed());
-        mvc.perform(post("/api/books").contentType(MediaType.TEXT_PLAIN).content("hello"))
+        mvc.perform(get("/api/nothing")).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/books").with(csrf())).andExpect(status().isMethodNotAllowed());
+        mvc.perform(post("/api/books").with(csrf()).contentType(MediaType.TEXT_PLAIN).content("hello"))
                 .andExpect(status().isUnsupportedMediaType());
         mvc.perform(get("/api/books").accept(MediaType.APPLICATION_XML))
                 .andExpect(status().isNotAcceptable());
-        mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/books").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"\",\"author\":\"Author\","
                                 + "\"year\":2020,\"genre\":\"SCIENCE\"}"))
                 .andExpect(status().isBadRequest())
@@ -186,7 +191,7 @@ class BookWorkflowTests {
 
     @Test
     void duplicateBookReturns409ProblemDetail() throws Exception {
-        mvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/books").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Effective Java\",\"author\":\"Joshua Bloch\","
                                 + "\"year\":2018,\"genre\":\"TECHNOLOGY\"}"))
                 .andExpect(status().isConflict())
@@ -197,7 +202,7 @@ class BookWorkflowTests {
 
     @Test
     void submittedHtmlIsEscapedInRedisplayedForm() throws Exception {
-        mvc.perform(post("/books").param("title", "<script>alert(1)</script>")
+        mvc.perform(post("/books").with(csrf()).param("title", "<script>alert(1)</script>")
                         .param("author", "").param("year", "2020").param("genre", "SCIENCE"))
                 .andExpect(content().string(containsString("&lt;script&gt;")))
                 .andExpect(content().string(not(containsString("<script>alert(1)</script>"))));

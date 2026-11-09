@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:lang="${#locale.language}">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${book.title}"></title><link rel="stylesheet" th:href="@{/css/app.css}"></head>
 <body><main class="container narrow">
     <header><a class="brand" th:href="@{/books}" th:text="#{book.catalogue}"></a><nav><a th:href="@{/books/{id}(id=${book.id},lang='en')}">English</a><a th:href="@{/books/{id}(id=${book.id},lang='ru')}">Русский</a></nav></header>
@@ -8,5 +8,11 @@
         <dt th:text="#{book.year}"></dt><dd th:text="${book.year}"></dd>
         <dt th:text="#{book.genre}"></dt><dd th:text="${book.genre == null ? #messages.msg('genre.UNKNOWN') : #messages.msg('genre.' + book.genre)}"></dd>
         <dt th:text="#{book.available}"></dt><dd th:text="${book.available ? #messages.msg('common.yes') : #messages.msg('common.no')}"></dd>
-    </dl><a th:href="@{/books}" th:text="#{form.back}"></a></section>
+    </dl>
+    <div class="actions">
+        <a th:href="@{/books}" th:text="#{form.back}"></a>
+        <form sec:authorize="hasRole('ADMIN')" th:action="@{/books/{id}/delete(id=${book.id})}" method="post">
+            <button type="submit">Delete book</button>
+        </form>
+    </div></section>
 </main></body></html>

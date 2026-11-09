@@ -1,11 +1,20 @@
 spring:
   application:
     name: spring-lab
+  datasource:
+    url: "${SPRINGLAB_DB_URL:jdbc:postgresql://127.0.0.1:5432/springlab}"
+    username: "${SPRINGLAB_DB_USER:springlab}"
+    password: "${SPRINGLAB_DB_PASSWORD:}"
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
   messages:
     encoding: UTF-8
     fallback-to-system-locale: false
 
 server:
+  address: 127.0.0.1
   port: 8080
 
 app:

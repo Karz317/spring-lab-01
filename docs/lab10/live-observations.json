@@ -1,0 +1,133 @@
+{
+  "redirect": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/login"
+  },
+  "redirectedLoginPage": 200,
+  "userLogin": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/"
+  },
+  "adminLogin": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/"
+  },
+  "logout": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/?logout"
+  },
+  "afterLogout": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/login"
+  },
+  "matrix": {
+    "anonymous": {
+      "GET /": {
+        "status": 200,
+        "location": null
+      },
+      "GET /books": {
+        "status": 302,
+        "location": "http://127.0.0.1:8080/login"
+      },
+      "GET /admin": {
+        "status": 302,
+        "location": "http://127.0.0.1:8080/login"
+      },
+      "GET /nowhere": {
+        "status": 302,
+        "location": "http://127.0.0.1:8080/login"
+      },
+      "POST /books": {
+        "status": 302,
+        "location": "http://127.0.0.1:8080/login"
+      }
+    },
+    "user": {
+      "GET /": {
+        "status": 200,
+        "location": null
+      },
+      "GET /books": {
+        "status": 200,
+        "location": null
+      },
+      "GET /admin": {
+        "status": 403,
+        "location": null
+      },
+      "GET /nowhere": {
+        "status": 403,
+        "location": null
+      },
+      "POST /books": {
+        "status": 403,
+        "location": null
+      }
+    },
+    "admin": {
+      "GET /": {
+        "status": 200,
+        "location": null
+      },
+      "GET /books": {
+        "status": 200,
+        "location": null
+      },
+      "GET /admin": {
+        "status": 200,
+        "location": null
+      },
+      "GET /nowhere": {
+        "status": 403,
+        "location": null
+      },
+      "POST /books": {
+        "status": 302,
+        "location": "http://127.0.0.1:8080/books"
+      }
+    }
+  },
+  "csrf": {
+    "login": {
+      "status": 302,
+      "location": "http://127.0.0.1:8080/"
+    },
+    "hiddenField": "_csrf",
+    "first8": "c8jzZ2tW",
+    "withoutToken": {
+      "status": 403,
+      "location": null
+    },
+    "withToken": {
+      "status": 302,
+      "location": "http://127.0.0.1:8080/books"
+    },
+    "booksFoundBefore": 0,
+    "booksFoundAfter": 1,
+    "saved": {
+      "id": 4,
+      "title": "CSRF demonstration book",
+      "author": "Lab Author",
+      "year": 2020,
+      "genre": "FICTION",
+      "createdAt": "2026-11-09T21:52:49.817646900Z"
+    },
+    "loginWithoutToken": {
+      "status": 403,
+      "location": null
+    }
+  },
+  "database": {
+    "version": "16.14",
+    "encoding": "UTF8",
+    "query": "SELECT username, password_hash FROM app_user;",
+    "rows": "username\tpassword_hash\r\nuser\t$2a$10$WjLsuxf9xBo/bVFWPRmK2.XQQjH7RWzCOBbolFqkF.VpPwv32AYs.\r\nadmin\t$2a$10$uR8GTa0pm6lvm/mW0zv/yu50aRTE1SSBgMjuuY92ln65kqDM1aJsi",
+    "roles": "username\trole\r\nadmin\tADMIN\r\nadmin\tUSER\r\nuser\tUSER",
+    "migration": "version\tscript\tsuccess\r\n1\tV1__create_accounts.sql\tt\r\n2\tV2__add_status.sql\tt\r\n3\tV3__index_owner_name.sql\tt\r\n4\tV4__create_audit_records.sql\tt\r\n5\tV5__security.sql\tt"
+  },
+  "disabled": {
+    "status": 302,
+    "location": "http://127.0.0.1:8080/login?error"
+  }
+}

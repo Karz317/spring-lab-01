@@ -6,18 +6,28 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @SpringBootTest
+@ActiveProfiles("test")
+@WithMockUser(roles = "ADMIN")
 class BookApiRestTestClientTests {
     private RestTestClient client;
 
     @BeforeEach
     void setUp(WebApplicationContext context) {
-        client = RestTestClient.bindToApplicationContext(context).build();
+        var mvc = webAppContextSetup(context).apply(springSecurity())
+                .defaultRequest(get("/").with(csrf())).build();
+        client = RestTestClient.bindTo(mvc).build();
     }
 
     @Test

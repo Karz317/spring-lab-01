@@ -62,4 +62,10 @@ public class BookPageController {
                 new Object[]{saved.title()}, locale));
         return "redirect:/books";
     }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable long id) {
+        service.delete(id);
+        return "redirect:/books";
+    }
 }

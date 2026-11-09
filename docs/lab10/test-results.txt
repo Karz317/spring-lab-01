@@ -1,0 +1,6 @@
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.251 s -- in kz.iitu.springlab.BookApiRestTestClientTests
+Tests run: 26, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.784 s -- in kz.iitu.springlab.BookWorkflowTests
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in kz.iitu.springlab.NoDigitsValidatorTests
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.737 s -- in kz.iitu.springlab.SecurityIntegrationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in kz.iitu.springlab.SpringLab01ApplicationTests
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.053 s -- in kz.iitu.springlab.Variant12SecurityTests

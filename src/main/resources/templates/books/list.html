@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:lang="${#locale.language}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,9 +15,10 @@
             <a th:href="@{/books(lang='ru',author=${author})}">Русский</a>
         </nav>
     </header>
+    <div th:replace="~{fragments/session :: account}"></div>
     <div class="heading-row">
         <div><h1 th:text="#{book.catalogue}">Book catalogue</h1><p class="intro" th:text="#{catalogue.intro}"></p></div>
-        <a class="button" th:href="@{/books/new}" th:text="#{book.new}">New book</a>
+        <a sec:authorize="hasRole('ADMIN')" class="button" th:href="@{/books/new}" th:text="#{book.new}">New book</a>
     </div>
     <p class="flash" role="status" th:if="${message}" th:text="${message}"></p>
     <form class="filter panel" th:action="@{/books}" method="get">

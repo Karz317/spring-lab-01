@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: springlab
+      POSTGRES_USER: springlab
+      POSTGRES_PASSWORD: ${SPRINGLAB_DB_PASSWORD:?Set SPRINGLAB_DB_PASSWORD first}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - lab10-pg-data:/var/lib/postgresql/data
+
+volumes:
+  lab10-pg-data:

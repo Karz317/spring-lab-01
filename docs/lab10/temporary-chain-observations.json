@@ -1,0 +1,22 @@
+{
+  "login": {
+    "status": 302,
+    "location": "http://127.0.0.1:18081/"
+  },
+  "catalogue": {
+    "status": 200,
+    "location": null
+  },
+  "unknown": {
+    "status": 403,
+    "location": null
+  },
+  "logout": {
+    "status": 302,
+    "location": "http://127.0.0.1:18081/?logout"
+  },
+  "afterLogout": {
+    "status": 302,
+    "location": "http://127.0.0.1:18081/login"
+  }
+}

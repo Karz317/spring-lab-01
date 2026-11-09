@@ -1,4 +1,8 @@
 :root { font-family: "DejaVu Sans", Arial, sans-serif; color: #18243a; background: #f3f6fb; line-height: 1.5; }
+.account { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 14px; }
+.account small { color: #5b6780; margin-left: 5px; }
+header .account { margin-bottom: 0; }
+.account button { padding: 7px 14px; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 a { color: #2457b7; text-underline-offset: 3px; }

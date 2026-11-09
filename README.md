@@ -1,5 +1,52 @@
 # Spring Laboratory Works
 
+## Laboratory 10 — Spring Security
+
+The catalogue uses form login backed by PostgreSQL 16, BCrypt, role checks
+and CSRF protection. Flyway applies the original V1–V4 scripts and adds
+`V5__security.sql`. Hibernate validates the schema. The catalogue continues
+to use the earlier in-memory book repository; users and roles are persisted.
+
+From the repository root, use JDK 25 and Maven. With Docker running:
+
+```powershell
+$env:SPRINGLAB_DB_PASSWORD = Read-Host 'Choose a password for the local lab database'
+docker compose up -d db
+.\mvnw.cmd clean verify
+java -jar .\target\spring-lab-01-0.0.1-SNAPSHOT.jar
+```
+
+Open <http://127.0.0.1:8080/books>. The demo accounts are `user / user123`
+and `admin / admin123`. The application's database password is separate.
+For an existing PostgreSQL installation, create a database named `springlab`
+and set `SPRINGLAB_DB_URL`, `SPRINGLAB_DB_USER` and
+`SPRINGLAB_DB_PASSWORD` to match it. Use a lab database that the account can
+migrate; startup binds to loopback.
+
+### Demonstration
+
+1. In a signed-out browser, open `/books`. The application returns
+   `302 /login`; the browser then displays the generated login form.
+2. Sign in as `user` and try `/admin`: expect `403`. Sign in as `admin`
+   in another browser session: `/admin` returns `200` and shows usernames,
+   roles and enabled state. Only the administrator can create, edit or
+   delete books; the existing `PUT /api/books/{id}` handles editing.
+3. In a database client, run `SELECT username, password_hash FROM app_user;`.
+4. As admin, open `/books/new` and look for `name="_csrf"` in its HTML.
+   In browser developer tools, remove the hidden input before submitting a
+   valid form: expect `403`. Reload the form and submit it unchanged:
+   expect `302 /books` and a new book. Keep the session the same in both
+   requests. The login form itself also requires CSRF.
+5. Run `.\mvnw.cmd '-Dtest=Variant12SecurityTests' test` for the three
+   access tests (`302`, `403`, `200`). The full suite also covers actual
+   authentication, account disabling, method security, and CSRF.
+
+The full Maven suite passed **42 tests** with H2 in PostgreSQL compatibility
+mode. The [live browser and SQL results](docs/lab10/live-observations.json)
+were recorded separately against PostgreSQL 16.14.
+
+The following sections document earlier branches and exercises.
+
 ## Laboratory 09 — Transactions and schema versioning
 
 The `lab09` branch adds a standalone **Spring Boot 3** module at

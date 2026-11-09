@@ -3,6 +3,7 @@ package kz.iitu.springlab.catalog;
 import java.util.List;
 import java.util.Locale;
 import kz.iitu.springlab.service.DuplicateTitleException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,11 +31,13 @@ public class BookService {
         return repository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Book create(Book book) {
         rejectDuplicate(book, null);
         return repository.create(book);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Book update(long id, Book book) {
         Book current = findById(id);
         rejectDuplicate(book, id);
@@ -44,10 +47,12 @@ public class BookService {
                 .orElseThrow(() -> new BookNotFoundException(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Book replace(long id, Book book) {
         return update(id, book);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(long id) {
         if (!repository.deleteById(id)) {
             throw new BookNotFoundException(id);
